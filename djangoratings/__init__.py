@@ -30,7 +30,7 @@ class RatingManager(object):
             raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
         is_anonymous = (request.user is None or not request.user.is_authenticated())
         if is_anonymous and not self.field.allow_anonymous:
-            raise TypeError("%s is not a valid option for %s" % (user, self.field.name))
+            raise TypeError("%s must be a user, not a '%s'" % (self.field.name, user.__class__.__name__))
         
         defaults = dict(
             score = score,
@@ -63,12 +63,14 @@ class RatingCreator(object):
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
         self.content_type = None
+        self._rating_manager = None
 
     def __get__(self, instance, type=None):
         if instance is None:
             raise AttributeError('Can only be accessed via an instance.')
-
-        return RatingManager(instance, field, score=getattr(instance, self.score_field_name), votes=getattr(instance, self.votes_field_name))
+        if self._rating_manager is None:
+            self._rating_manager = RatingManager(instance, field, score=getattr(instance, self.score_field_name), votes=getattr(instance, self.votes_field_name))
+        return self._rating_manager
 
     def __set__(self, instance, value):
         if isinstance(value, Rating):
