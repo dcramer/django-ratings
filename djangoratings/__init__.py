@@ -117,7 +117,7 @@ class RatingField(models.IntegerField):
 
     def get_db_prep_lookup(self, lookup_type, value):
         # TODO: hack in support for __score and __votes
-        raise NotImplementedError, self.get_db_prep_lookup
+        raise NotImplementedError(self.get_db_prep_lookup)
         if lookup_type == 'exact':
             return [self.get_db_prep_save(value)]
         elif lookup_type == 'in':
