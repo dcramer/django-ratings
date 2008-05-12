@@ -1,6 +1,14 @@
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
+
+from django.conf import settings
+
+from models import Vote, Score
 
 import forms
+
+if 'django.contrib.contenttypes' not in settings.INSTALLED_APPS:
+    raise ImportError("djangoratings requires django.contrib.contenttypes in your INSTALLED_APPS")
 
 # The following code is based on the FuzzyDate snippet
 # http://blog.elsdoerfer.name/2008/01/08/fuzzydates-or-one-django-model-field-multiple-database-columns/
@@ -9,32 +17,70 @@ class Rating(object):
     def __init__(self, score, votes):
         self.score = score
         self.votes = votes
-    
-    def add(self, **kwargs):
-        # TODO
-        pass
+
+class RatingManager(object):
+    def __init__(self, instance, field, score, votes):
+        self.score = score
+        self.votes = votes
+        self.instance = instance
+        self.field = field
+        
+    def add(self, score, user, ip_address):
+        if score not in self.field.choices:
+            raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
+        is_anonymous = (request.user is None or not request.user.is_authenticated())
+        if is_anonymous and not self.field.allow_anonymous:
+            raise TypeError("%s is not a valid option for %s" % (user, self.field.name))
+        
+        defaults = dict(
+            score = score,
+            ip_address = ip_address,
+            user = is_anonymous and None or user,
+        )
+        
+        if is_anonymous:
+            rating, created = Vote.objects.get_or_create(
+                content_type    = self.field.get_content_type(),
+                object_id       = self.instance.id,
+                ip_addresss     = ip_address,
+                defaults        = defaults,
+            )
+        else:
+            rating, created = Vote.objects.get_or_create(
+                content_type    = self.field.get_content_type(),
+                object_id       = self.instance.id,
+                user            = user,
+                defaults        = defaults,
+            )
+        if not created and self.field.can_change_vote:
+            rating.score = score
+            rating.save()
+            
 
 class RatingCreator(object):
     def __init__(self, field):
         self.field = field
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
+        self.content_type = None
 
-    def __get__(self, obj, type=None):
-        if obj is None:
+    def __get__(self, instance, type=None):
+        if instance is None:
             raise AttributeError('Can only be accessed via an instance.')
 
-        score = obj.__dict__[self.score_field_name]
-        if score is None: return None
-        else:
-            return Rating(score=score, votes=getattr(obj, self.votes_field_name))
+        return RatingManager(instance, field, score=getattr(instance, self.score_field_name), votes=getattr(instance, self.votes_field_name))
 
-    def __set__(self, obj, value):
+    def __set__(self, instance, value):
         if isinstance(value, Rating):
-            setattr(obj, self.votes_field_name, value.votes)
-            setattr(obj, self.score_field_name, value.score)
+            setattr(instance, self.votes_field_name, value.votes)
+            setattr(instance, self.score_field_name, value.score)
         else:
             raise TypeError("%s value must be a Rating instance, not '%r'" % (self.field.name, value))
+
+    def get_content_type(self):
+        if self.content_type is None:
+            self.content_type = ContentType.objects.get_for_model(self.instance,)
+        return self.content_type
 
 class RatingField(models.IntegerField):
     """
@@ -45,6 +91,7 @@ class RatingField(models.IntegerField):
     def __init__(self, **kwargs):
         if 'choices' not in kwargs:
             raise TypeError("%s missing required attribute 'choices'" % (self.__class__.__name__,))
+        self.can_change_vote = kwargs.pop('can_change_vote', False)
         super(RatingField, self).__init__(verbose_name, name, **kwargs)
     
     def contribute_to_class(self, cls, name):
