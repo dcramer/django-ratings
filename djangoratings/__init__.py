@@ -46,7 +46,7 @@ class RatingCreator(object):
             setattr(obj, self.votes_field_name, value.votes)
             setattr(obj, self.score_field_name, value.score)
         else:
-            raise TypeError, "%s value must be a Rating instance, not '%r'" % (self.field.name, value)
+            raise TypeError("%s value must be a Rating instance, not '%r'" % (self.field.name, value))
 
 class RatingField(models.IntegerField):
     """
@@ -56,7 +56,7 @@ class RatingField(models.IntegerField):
     
     def __init__(self, **kwargs):
         if 'choices' not in kwargs:
-            raise TypeError, "choices must be a list or tuple, not a NoneType"
+            raise TypeError("%s missing required attribute 'choices'" % (self.__class__.__name__,))
         super(RatingField, self).__init__(verbose_name, name, **kwargs)
     
     def contribute_to_class(self, cls, name):
