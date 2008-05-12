@@ -21,6 +21,10 @@ class Rating(object):
     def __init__(self, score, votes):
         self.score = score
         self.votes = votes
+    
+    def add(self, **kwargs):
+        # TODO
+        pass
 
 class RatingCreator(object):
     def __init__(self, field):
@@ -47,7 +51,14 @@ class RatingCreator(object):
 class RatingField(models.IntegerField):
     """
     A rating field contributes two columns to the model instead of the standard single column.
-    """    
+    """
+    allow_anonymous = False
+    
+    def __init__(self, **kwargs):
+        if 'choices' not in kwargs:
+            raise TypeError, "choices must be a list or tuple, not a NoneType"
+        super(RatingField, self).__init__(verbose_name, name, **kwargs)
+    
     def contribute_to_class(self, cls, name):
         # Votes tally field
         votes_field = models.PositiveIntegerField(
@@ -83,3 +94,6 @@ class RatingField(models.IntegerField):
         return super(RatingField, self).formfield(**defaults)
 
     # TODO: flatten_data method
+
+class AnonymousRatingField(RatingField):
+    allow_anonymous = True
