@@ -52,9 +52,27 @@ class RatingManager(object):
                 user            = user,
                 defaults        = defaults,
             )
+        has_changed = False
         if not created and self.field.can_change_vote:
+            has_changed = True
+            self.field.score -= rating.score
             rating.score = score
             rating.save()
+        else:
+            has_changed = True
+            self.field.votes += 1
+        if has_changed:
+            self.field.score += rating.score
+            self.instance.save()
+        
+            score, created = Score.objects.get_or_create(
+                content_type    = self.field.get_content_type(),
+                object_id       = self.instance.id,
+                defaults        = dict(
+                    score   = self.field.score,
+                    votes   = self.field.votes
+                ),
+            )
             
 
 class RatingCreator(object):

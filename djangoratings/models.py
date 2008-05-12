@@ -12,3 +12,7 @@ class Score(models.Model):
     content_type    = models.ForeignKey(ContentType)
     object_id       = models.PositiveIntegerField()
     score           = models.IntegerField()
+    votes           = models.PositiveIntegerField()
+    
+    class Meta:
+        unique_together = (('content_type', 'object_id'),)
