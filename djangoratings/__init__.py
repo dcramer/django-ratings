@@ -2,18 +2,6 @@ from django.db import models
 
 import forms
 
-class Vote(models.Model):
-    content_type    = models.ForeignKey(ContentType)
-    object_id       = models.PositiveIntegerField()
-    score           = models.IntegerField()
-    user            = models.ForeignKey(User, blank=True, null=True)
-    ip_address      = models.IPAddressField()
-
-class Score(models.Model):
-    content_type    = models.ForeignKey(ContentType)
-    object_id       = models.PositiveIntegerField()
-    score           = models.IntegerField()
-
 # The following code is based on the FuzzyDate snippet
 # http://blog.elsdoerfer.name/2008/01/08/fuzzydates-or-one-django-model-field-multiple-database-columns/
 
