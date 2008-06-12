@@ -30,6 +30,7 @@ class RatingManager(object):
         self.score_field_name = "%s_score" % (self.field.name,)
         
     def add(self, score, user, ip_address):
+        """Used to add a rating to an object."""
         if score not in dict(self.field.choices).keys():
             raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
         is_anonymous = (user is None or not user.is_authenticated())
