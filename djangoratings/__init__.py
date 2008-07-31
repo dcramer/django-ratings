@@ -48,7 +48,7 @@ class RatingManager(object):
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
                 user            = None,
-                ip_addresss     = ip_address,
+                ip_address      = ip_address,
                 defaults        = defaults,
             )
         else:
