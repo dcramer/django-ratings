@@ -43,7 +43,7 @@ class RatingManager(object):
             raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
         is_anonymous = (user is None or not user.is_authenticated())
         if is_anonymous and not self.field.allow_anonymous:
-            raise TypeError("user must be a user, not '%r'" % (self.field.name, user))
+            raise TypeError("user must be a user, not '%r'" % (user,))
         
         if is_anonymous:
             user = None
