@@ -51,7 +51,6 @@ class RatingManager(object):
             user = is_anonymous and None or user,
         )
         
-        
         if is_anonymous:
             kwargs = dict(
                 content_type    = self.get_content_type(),
@@ -70,7 +69,7 @@ class RatingManager(object):
         try:
             rating, created = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
-            kwargs = kwargs + defraults
+            kwargs = kwargs + defaults
             rating, created = Vote.objects.create(**kwargs), True
             
         has_changed = False
