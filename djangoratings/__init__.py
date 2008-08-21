@@ -45,27 +45,24 @@ class RatingManager(object):
         if is_anonymous and not self.field.allow_anonymous:
             raise TypeError("user must be a user, not '%r'" % (self.field.name, user))
         
+        if is_anonymous:
+            user = None
+        
         defaults = dict(
             score = score,
             ip_address = ip_address,
-            user = is_anonymous and None or user,
+            user = user,
         )
         
+        kwargs = dict(
+            content_type    = self.get_content_type(),
+            object_id       = self.instance.id,
+            key             = self.field.key,
+            user            = user,
+        )
         if is_anonymous:
-            kwargs = dict(
-                content_type    = self.get_content_type(),
-                object_id       = self.instance.id,
-                key             = self.field.key,
-                user            = None,
-                ip_address      = ip_address,
-            )
-        else:
-            kwargs = dict(
-                content_type    = self.get_content_type(),
-                object_id       = self.instance.id,
-                key             = self.field.key,
-                user            = user,
-            )
+            kwargs['ip_address'] = ip_address
+
         try:
             rating, created = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
@@ -88,18 +85,18 @@ class RatingManager(object):
             self.score += rating.score
             self.instance.save()
             #setattr(self.instance, self.field.name, Rating(score=self.score, votes=self.votes))
-        
+            
             defaults = dict(
                 score   = self.score,
                 votes   = self.votes,
             )
-        
+            
             kwargs = dict(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
                 key             = self.field.key,
             )
-        
+            
             try:
                 score, created = Score.objects.get(**kwargs), False
             except Score.DoesNotExist:
