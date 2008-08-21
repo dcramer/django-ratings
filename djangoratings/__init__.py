@@ -69,7 +69,7 @@ class RatingManager(object):
         try:
             rating, created = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
-            kwargs = kwargs + defaults
+            kwargs.update(defaults)
             rating, created = Vote.objects.create(**kwargs), True
             
         has_changed = False
@@ -103,7 +103,7 @@ class RatingManager(object):
             try:
                 score, created = Score.objects.get(**kwargs), False
             except Score.DoesNotExist:
-                kwargs = kwargs + defaults
+                kwargs.update(defaults)
                 score, created = Score.objects.create(**kwargs), True
             
             if not created:
