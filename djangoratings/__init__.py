@@ -15,6 +15,14 @@ __all__ = ('Rating', 'RatingField', 'AnonymousRatingField')
 # The following code is based on the FuzzyDate snippet
 # http://blog.elsdoerfer.name/2008/01/08/fuzzydates-or-one-django-model-field-multiple-database-columns/
 
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import new as md5
+    
+def md5_hexdigest(value):
+    return md5(value).hexdigest()
+
 class Rating(object):
     def __init__(self, score, votes):
         self.score = score
@@ -47,6 +55,7 @@ class RatingManager(object):
             rating, created = Vote.objects.get_or_create(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
+                key             = self.field.key,
                 user            = None,
                 ip_address      = ip_address,
                 defaults        = defaults,
@@ -55,6 +64,7 @@ class RatingManager(object):
             rating, created = Vote.objects.get_or_create(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
+                key             = self.field.key,
                 user            = user,
                 defaults        = defaults,
             )
@@ -83,6 +93,7 @@ class RatingManager(object):
             score, created = Score.objects.get_or_create(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
+                key             = self.field.key,
                 defaults        = defaults,
             )
             
@@ -116,6 +127,7 @@ class RatingCreator(object):
         self.field = field
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
+        # we need a unique key incase there are multiple ratings on a model
         self._rating_manager = None
 
     def __get__(self, instance, type=None):
@@ -148,18 +160,20 @@ class RatingField(IntegerField):
         super(RatingField, self).__init__(*args, **kwargs)
     
     def contribute_to_class(self, cls, name):
+        self.name = name
+
         # Votes tally field
         votes_field = PositiveIntegerField(
             editable=False, default=0, blank=True)
-        cls.add_to_class("%s_votes" % (name,), votes_field)
+        cls.add_to_class("%s_votes" % (self.name,), votes_field)
 
         # Score sum field
-        #super(RatingField, self).contribute_to_class(cls, name)
-        self.name = name
-
         score_field = IntegerField(
             editable=False, default=0, blank=True)
-        cls.add_to_class("%s_score" % (name,), score_field)
+        cls.add_to_class("%s_score" % (self.name,), score_field)
+
+
+        self.key = md5_hexdigest(self.name)
 
         setattr(cls, name, RatingCreator(self))
 
