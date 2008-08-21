@@ -139,9 +139,7 @@ class RatingCreator(object):
     def __get__(self, instance, type=None):
         if instance is None:
             raise AttributeError('Can only be accessed via an instance.')
-        if self._rating_manager is None:
-            self._rating_manager = RatingManager(instance, self.field)
-        return self._rating_manager
+        return RatingManager(instance, self.field)
 
     def __set__(self, instance, value):
         if isinstance(value, Rating):
