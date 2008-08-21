@@ -152,12 +152,11 @@ class RatingField(IntegerField):
     """
     A rating field contributes two columns to the model instead of the standard single column.
     """
-    allow_anonymous = False
-    
     def __init__(self, *args, **kwargs):
         if 'choices' not in kwargs:
             raise TypeError("%s missing required attribute 'choices'" % (self.__class__.__name__,))
         self.can_change_vote = kwargs.pop('can_change_vote', False)
+        self.allow_anonymous = kwargs.pop('allow_anonymous', False)
         kwargs['editable'] = False
         kwargs['default'] = 0
         kwargs['blank'] = True
