@@ -51,23 +51,28 @@ class RatingManager(object):
             user = is_anonymous and None or user,
         )
         
+        
         if is_anonymous:
-            rating, created = Vote.objects.get_or_create(
+            kwargs = dict(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
                 key             = self.field.key,
                 user            = None,
                 ip_address      = ip_address,
-                defaults        = defaults,
             )
         else:
-            rating, created = Vote.objects.get_or_create(
+            kwargs = dict(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
                 key             = self.field.key,
                 user            = user,
-                defaults        = defaults,
             )
+        try:
+            rating, created = Vote.objects.get(**kwargs), False
+        except Vote.DoesNotExist:
+            kwargs = kwargs + defraults
+            rating, created = Vote.objects.create(**kwargs), True
+            
         has_changed = False
         if not created:
             if self.field.can_change_vote:
