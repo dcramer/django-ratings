@@ -95,12 +95,17 @@ class RatingManager(object):
                 votes   = self.votes,
             )
         
-            score, created = Score.objects.get_or_create(
+            kwargs = dict(
                 content_type    = self.get_content_type(),
                 object_id       = self.instance.id,
                 key             = self.field.key,
-                defaults        = defaults,
             )
+        
+            try:
+                score, created = Score.objects.get(**kwargs), False
+            except Score.DoesNotExist:
+                kwargs = kwargs + defaults
+                score, created = Score.objects.create(**kwargs), True
             
             if not created:
                 score.__dict__.update(defaults)
