@@ -58,9 +58,10 @@ class RatingManager(object):
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
             key             = self.field.key,
-            user            = user,
         )
-        if is_anonymous:
+        if user:
+            kwargs['user'] = user
+        else:
             kwargs['ip_address'] = ip_address
 
         try:
