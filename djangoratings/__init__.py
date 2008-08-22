@@ -36,6 +36,27 @@ class RatingManager(object):
         
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
+    
+    def get_rating(self, user, ip_address):
+        if user and not user.is_authenticated():
+            user = None
+            
+        kwargs = dict(
+            content_type    = self.get_content_type(),
+            object_id       = self.instance.id,
+            key             = self.field.key,
+        )
+        if user:
+            kwargs['user'] = user
+        else:
+            kwargs['ip_address'] = ip_address
+
+        try:
+            rating = Vote.objects.get(**kwargs)
+            return rating.score
+        except Vote.DoesNotExist:
+            pass
+        return
         
     def add(self, score, user, ip_address):
         """Used to add a rating to an object."""
