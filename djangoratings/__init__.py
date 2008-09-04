@@ -45,11 +45,10 @@ class RatingManager(object):
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
             key             = self.field.key,
+            user            = user,
         )
-        if user:
+        if not user:
             kwargs['user'] = user
-        else:
-            kwargs['ip_address'] = ip_address
 
         try:
             rating = Vote.objects.get(**kwargs)
@@ -72,17 +71,15 @@ class RatingManager(object):
         defaults = dict(
             score = score,
             ip_address = ip_address,
-            user = user,
         )
         
         kwargs = dict(
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
             key             = self.field.key,
+            user            = user,
         )
-        if user:
-            kwargs['user'] = user
-        else:
+        if not user:
             kwargs['ip_address'] = ip_address
 
         try:
