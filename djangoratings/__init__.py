@@ -45,11 +45,12 @@ class RatingManager(object):
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
             key             = self.field.key,
-            user            = user,
         )
         if not user:
             kwargs['user'] = user
-
+        else:
+            kwargs['user__isnull'] = True
+            
         try:
             rating = Vote.objects.get(**kwargs)
             return rating.score
