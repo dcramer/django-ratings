@@ -46,7 +46,7 @@ class RatingManager(object):
             object_id       = self.instance.id,
             key             = self.field.key,
         )
-        if not user:
+        if user:
             kwargs['user'] = user
         else:
             kwargs['user__isnull'] = True
