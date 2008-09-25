@@ -46,6 +46,7 @@ class RatingManager(object):
 
         if user and not user.is_authenticated():
             kwargs['user__isnull'] = True
+            kwargs['ip_address'] = ip_address
         else:
             kwargs['user'] = user
         try:
