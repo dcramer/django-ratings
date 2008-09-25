@@ -38,19 +38,16 @@ class RatingManager(object):
         self.score_field_name = "%s_score" % (self.field.name,)
     
     def get_rating(self, user, ip_address):
-        if user and not user.is_authenticated():
-            user = None
-            
         kwargs = dict(
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
             key             = self.field.key,
         )
-        if user:
-            kwargs['user'] = user
-        else:
+
+        if user and not user.is_authenticated():
             kwargs['user__isnull'] = True
-            
+        else:
+            kwargs['user'] = user
         try:
             rating = Vote.objects.get(**kwargs)
             return rating.score
