@@ -37,6 +37,10 @@ class RatingManager(object):
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
     
+    def get_percent(self):
+        # hackish
+        return float(self.score)/(self.votes*self.field.choices[-1][0])*100
+    
     def get_rating(self, user, ip_address):
         kwargs = dict(
             content_type    = self.get_content_type(),
