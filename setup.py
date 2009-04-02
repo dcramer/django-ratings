@@ -3,11 +3,11 @@
 from distutils.core import setup
 
 setup(
-    name='djangoratings',
+    name='django-ratings',
     version='0.1',
     description='Generic Ratings in Django',
     author='David Cramer',
     author_email='dcramer@gmail.com',
-    url='http://code.curse.com/p/django-ratings/',
+    url='http://code.google.com/p/django-ratings/',
     packages=['djangoratings'],
 )
