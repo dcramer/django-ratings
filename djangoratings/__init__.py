@@ -1,19 +1,17 @@
-from models import Vote, Score
 from django.db.models import IntegerField, PositiveIntegerField
+from django.conf import settings
 
 import forms
+import itertools
 
-from django.contrib.contenttypes.models import ContentType
-
-from django.conf import settings
+from models import Vote, Score
 
 if 'django.contrib.contenttypes' not in settings.INSTALLED_APPS:
     raise ImportError("djangoratings requires django.contrib.contenttypes in your INSTALLED_APPS")
 
-__all__ = ('Rating', 'RatingField', 'AnonymousRatingField')
+from django.contrib.contenttypes.models import ContentType
 
-# The following code is based on the FuzzyDate snippet
-# http://blog.elsdoerfer.name/2008/01/08/fuzzydates-or-one-django-model-field-multiple-database-columns/
+__all__ = ('Rating', 'RatingField', 'AnonymousRatingField')
 
 try:
     from hashlib import md5
@@ -33,7 +31,6 @@ class RatingManager(object):
         self.content_type = None
         self.instance = instance
         self.field = field
-        self._maxvalue = None
         
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
@@ -41,12 +38,18 @@ class RatingManager(object):
     def get_percent(self):
         """get_percent()
         
-        Returns the percentage of the score based on a 0-point scale."""
-        if not self.score or not self.votes:
+        Returns the weighted percentage of the score from min-max values"""
+        if not (self.votes and self.score):
             return 0
-        if not self._maxvalue:
-            self._maxvalue = max([n[0] for n in self.field.choices])
-        return float(self.score)/((self.votes+self.field.weight)*self._maxvalue)*100
+        return 100/self.field.range*self.get_rating()
+    
+    def get_real_percent(self):
+        """get_real_percent()
+        
+        Returns the unmodified percentage of the score based on a 0-point scale."""
+        if not (self.votes and self.score):
+            return 0
+        return 100/self.field.range*self.get_real_rating()
     
     def get_ratings(self):
         """get_ratings()
@@ -57,10 +60,24 @@ class RatingManager(object):
     def get_rating(self):
         """get_rating()
         
-        Returns the average rating."""
-        if not self.score or not self.votes:
+        Returns the weighted average rating."""
+        if not (self.votes and self.score):
             return 0
-        return self.score/(self.votes+self.field.weight)
+        return float(self.score)/(self.votes+self.field.weight)
+    
+    def get_opinion_percent(self):
+        """get_opinion_percent()
+        
+        Returns a neutral-based percentage."""
+        return (self.get_percent()+100)/2
+
+    def get_real_rating(self):
+        """get_rating()
+        
+        Returns the unmodified average rating."""
+        if not (self.votes and self.score):
+            return 0
+        return float(self.score)/self.votes
     
     def get_rating_for_user(self, user, ip_address):
         """get_rating_for_user(user, ip_address)
@@ -88,8 +105,9 @@ class RatingManager(object):
         """add(score, user, ip_address)
         
         Used to add a rating to an object."""
-        if score not in dict(self.field.choices).keys():
+        if score < 1 or score > self.field.range:
             raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
+
         is_anonymous = (user is None or not user.is_authenticated())
         if is_anonymous and not self.field.allow_anonymous:
             raise TypeError("user must be a user, not '%r'" % (user,))
@@ -186,7 +204,8 @@ class RatingCreator(object):
 
     def __get__(self, instance, type=None):
         if instance is None:
-            raise AttributeError('Can only be accessed via an instance.')
+            return self.field
+            #raise AttributeError('Can only be accessed via an instance.')
         return RatingManager(instance, self.field)
 
     def __set__(self, instance, value):
@@ -201,10 +220,11 @@ class RatingField(IntegerField):
     A rating field contributes two columns to the model instead of the standard single column.
     """
     def __init__(self, *args, **kwargs):
-        if 'choices' not in kwargs:
-            raise TypeError("%s missing required attribute 'choices'" % (self.__class__.__name__,))
+        if 'choices' in kwargs:
+            raise TypeError("%s invalid attribute 'choices'" % (self.__class__.__name__,))
         self.can_change_vote = kwargs.pop('can_change_vote', False)
         self.weight = kwargs.pop('weight', 0)
+        self.range = kwargs.pop('range', 2)
         self.allow_anonymous = kwargs.pop('allow_anonymous', False)
         kwargs['editable'] = False
         kwargs['default'] = 0
