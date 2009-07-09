@@ -33,28 +33,39 @@ class RatingManager(object):
         self.content_type = None
         self.instance = instance
         self.field = field
+        self._maxvalue = None
         
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
     
     def get_percent(self):
-        # hackish
+        """get_percent()
+        
+        Returns the percentage of the score based on a 0-point scale."""
         if not self.score or not self.votes:
             return 0
-        return float(self.score)/(self.votes*self.field.choices[-1][0])*100
+        if not self._maxvalue:
+            self._maxvalue = max([n[0] for n in self.field.choices])
+        return float(self.score)/((self.votes+self.field.weight)*self._maxvalue)*100
     
     def get_ratings(self):
-        """Returns a Vote QuerySet for this rating field."""
+        """get_ratings()
+        
+        Returns a Vote QuerySet for this rating field."""
         return Vote.objects.filter(content_type=self.get_content_type(), object_id=self.instance.id, key=self.field.key)
         
     def get_rating(self):
-        """Returns the average rating."""
+        """get_rating()
+        
+        Returns the average rating."""
         if not self.score or not self.votes:
             return 0
-        return self.score/self.votes
+        return self.score/(self.votes+self.field.weight)
     
     def get_rating_for_user(self, user, ip_address):
-        """Returns the rating for a user or anonymous IP."""
+        """get_rating_for_user(user, ip_address)
+        
+        Returns the rating for a user or anonymous IP."""
         kwargs = dict(
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
@@ -74,7 +85,9 @@ class RatingManager(object):
         return
         
     def add(self, score, user, ip_address):
-        """Used to add a rating to an object."""
+        """add(score, user, ip_address)
+        
+        Used to add a rating to an object."""
         if score not in dict(self.field.choices).keys():
             raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
         is_anonymous = (user is None or not user.is_authenticated())
@@ -191,6 +204,7 @@ class RatingField(IntegerField):
         if 'choices' not in kwargs:
             raise TypeError("%s missing required attribute 'choices'" % (self.__class__.__name__,))
         self.can_change_vote = kwargs.pop('can_change_vote', False)
+        self.weight = kwargs.pop('weight', 0)
         self.allow_anonymous = kwargs.pop('allow_anonymous', False)
         kwargs['editable'] = False
         kwargs['default'] = 0
