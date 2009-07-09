@@ -43,7 +43,7 @@ class RatingManager(object):
     
     def get_ratings(self):
         """Returns a Vote QuerySet for this rating field."""
-        return Vote.objects.filter(content_type=self.get_content_type(), object_idself.instance.id, key=self.field.key)
+        return Vote.objects.filter(content_type=self.get_content_type(), object_id=self.instance.id, key=self.field.key)
     
     def get_rating(self, user, ip_address):
         kwargs = dict(
