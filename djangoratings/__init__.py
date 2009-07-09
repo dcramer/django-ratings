@@ -39,13 +39,22 @@ class RatingManager(object):
     
     def get_percent(self):
         # hackish
+        if not self.score or not self.votes:
+            return 0
         return float(self.score)/(self.votes*self.field.choices[-1][0])*100
     
     def get_ratings(self):
         """Returns a Vote QuerySet for this rating field."""
         return Vote.objects.filter(content_type=self.get_content_type(), object_id=self.instance.id, key=self.field.key)
+        
+    def get_rating(self):
+        """Returns the average rating."""
+        if not self.score or not self.votes:
+            return 0
+        return self.score/self.votes
     
-    def get_rating(self, user, ip_address):
+    def get_rating_for_user(self, user, ip_address):
+        """Returns the rating for a user or anonymous IP."""
         kwargs = dict(
             content_type    = self.get_content_type(),
             object_id       = self.instance.id,
