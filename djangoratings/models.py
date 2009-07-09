@@ -13,6 +13,12 @@ class Vote(models.Model):
     class Meta:
         unique_together = (('content_type', 'object_id', 'key', 'user', 'ip_address'))
 
+    def partial_ip_address(self):
+        ip = self.ip_address.split('.')
+        ip[-1] = 'xxx'
+        return '.'.join(ip)
+    partial_ip_address = property(partial_ip_address)
+
 class Score(models.Model):
     content_type    = models.ForeignKey(ContentType)
     object_id       = models.PositiveIntegerField()
