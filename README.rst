@@ -3,7 +3,7 @@ A generic ratings module. The field itself appends two additional fields on the 
 Installation
 ------------
 
-You will need to add `djangoratings` to your `INSTALLED_APPS`:
+You will need to add `djangoratings` to your `INSTALLED_APPS`::
 
 	INSTALLED_APPS = (
 	    'django.contrib.admin',
@@ -18,6 +18,7 @@ Finally, run `python manage.py syncdb` in your appication's directory to create 
 Setup your models
 -----------------
 
+::
 	from djangoratings import RatingField
 
 	class MyModel(models.Model):
@@ -33,15 +34,15 @@ Alternatively you could do something like:
 Using the model API
 -------------------
 
-And adding votes is also simple:
+And adding votes is also simple::
 
 	myinstance.rating.add(score=1, user=request.user, ip_address=request.META['REMOTE_ADDR'])
 
-Retrieving votes is just as easy:
+Retrieving votes is just as easy::
 
 	myinstance_ai.get_rating(request.user, request.META['REMOTE_ADDR'])
 
-Accessing information about the rating of an object is also easy:
+Accessing information about the rating of an object is also easy::
 
 	# these do not hit the database
 	myinstance.rating.votes
