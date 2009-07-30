@@ -18,7 +18,8 @@ Finally, run `python manage.py syncdb` in your appication's directory to create 
 Setup your models
 -----------------
 
-::
+The way django-ratings is built requires you to attach a RatingField to your models. This field will create two columns, a votes column, and a score column. They will both be prefixed with your field name::
+
 	from djangoratings import RatingField
 
 	class MyModel(models.Model):
