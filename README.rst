@@ -25,7 +25,7 @@ The way django-ratings is built requires you to attach a RatingField to your mod
 	class MyModel(models.Model):
 	    rating = RatingField(range=5) # 5 possible rating values, 1-5
 
-Alternatively you could do something like:
+Alternatively you could do something like::
 
 	from djangoratings import AnonymousRatingField
 
