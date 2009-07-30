@@ -21,6 +21,10 @@ except ImportError:
 def md5_hexdigest(value):
     return md5(value).hexdigest()
 
+class InvalidRating(ValueError): pass
+class AuthRequired(TypeError): pass
+class CannotChangeVote(object): pass
+
 class Rating(object):
     def __init__(self, score, votes):
         self.score = score
@@ -105,12 +109,17 @@ class RatingManager(object):
         """add(score, user, ip_address)
         
         Used to add a rating to an object."""
+        try:
+            score = int(score)
+        except (ValueError, TypeError):
+            raise InvalidRating("%s is not a valid choice for %s" % (score, self.field.name))
+
         if score < 1 or score > self.field.range:
-            raise ValueError("%s is not a valid choice for %s" % (score, self.field.name))
+            raise InvalidRating("%s is not a valid choice for %s" % (score, self.field.name))
 
         is_anonymous = (user is None or not user.is_authenticated())
         if is_anonymous and not self.field.allow_anonymous:
-            raise TypeError("user must be a user, not '%r'" % (user,))
+            raise AuthRequired("user must be a user, not '%r'" % (user,))
         
         if is_anonymous:
             user = None
@@ -143,7 +152,7 @@ class RatingManager(object):
                 rating.score = score
                 rating.save()
             else:
-                return
+                raise CannotChangeVote
         else:
             has_changed = True
             self.votes += 1
