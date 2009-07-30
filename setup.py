@@ -8,6 +8,6 @@ setup(
     description='Generic Ratings in Django',
     author='David Cramer',
     author_email='dcramer@gmail.com',
-    url='http://code.google.com/p/django-ratings/',
+    url='http://github.com/dcramer/django-ratings',
     packages=['djangoratings'],
 )
