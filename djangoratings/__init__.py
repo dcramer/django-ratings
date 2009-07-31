@@ -200,7 +200,7 @@ class RatingManager(object):
 
     def get_content_type(self):
         if self.content_type is None:
-            self.content_type = ContentType.objects.get_for_model(self.instance,)
+            self.content_type = ContentType.objects.get_for_model(self.instance)
         return self.content_type
 
 class RatingCreator(object):
