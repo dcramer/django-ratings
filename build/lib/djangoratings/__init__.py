@@ -23,7 +23,7 @@ def md5_hexdigest(value):
 
 class InvalidRating(ValueError): pass
 class AuthRequired(TypeError): pass
-class CannotChangeVote(Exception): pass
+class CannotChangeVote(object): pass
 
 class Rating(object):
     def __init__(self, score, votes):
@@ -152,7 +152,7 @@ class RatingManager(object):
                 rating.score = score
                 rating.save()
             else:
-                raise CannotChangeVote()
+                raise CannotChangeVote
         else:
             has_changed = True
             self.votes += 1
@@ -200,7 +200,7 @@ class RatingManager(object):
 
     def get_content_type(self):
         if self.content_type is None:
-            self.content_type = ContentType.objects.get_for_model(self.instance)
+            self.content_type = ContentType.objects.get_for_model(self.instance,)
         return self.content_type
 
 class RatingCreator(object):
