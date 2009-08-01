@@ -279,4 +279,6 @@ class RatingField(IntegerField):
 
 
 class AnonymousRatingField(RatingField):
-    allow_anonymous = True
+    def __init__(self, *args, **kwargs):
+        kwargs['allow_anonymous'] = True
+        super(AnonymousRatingField, self).__init__(*args, **kwargs)
