@@ -57,5 +57,5 @@ class AddRatingView(object):
         return response
         
     def get_instance(self, content_type_id, object_id):
-        return ContentType.objects.filter(pk=content_type_id)\
+        return ContentType.objects.get(pk=content_type_id)\
             .get_object_for_this_type(pk=object_id)
