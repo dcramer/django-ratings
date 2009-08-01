@@ -42,6 +42,11 @@ class AddRatingView(object):
     def rating_added_response(self, request, context):
         response = HttpResponse('Vote recorded.')
         return response
+
+    def authentication_required_response(self, request, context):
+        response = HttpResponse('You must be logged in to vote.')
+        response.status_code = 403
+        return response
     
     def cannot_change_vote_response(self, request, context):
         response = HttpResponse('You have already voted.')
