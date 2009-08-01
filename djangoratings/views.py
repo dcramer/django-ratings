@@ -1,6 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 
+from exceptions import *
+
 class AddRatingView(object):
     def __call__(self, request, content_type_id, object_id, field_name, score):
         """__call__(request, content_type_id, object_id, field_name, score)
@@ -23,7 +25,7 @@ class AddRatingView(object):
         
         try:
             field.add(score, request.user, request.META.get('REMOTE_ADDR'))
-        except AuthError:
+        except AuthRequired:
             return self.authentication_required_response(request, context)
         except InvalidRating:
             return self.invalid_rating_response(request, context)

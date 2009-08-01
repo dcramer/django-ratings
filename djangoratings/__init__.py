@@ -6,6 +6,8 @@ import itertools
 
 from models import Vote, Score
 
+from exceptions import *
+
 if 'django.contrib.contenttypes' not in settings.INSTALLED_APPS:
     raise ImportError("djangoratings requires django.contrib.contenttypes in your INSTALLED_APPS")
 
@@ -20,10 +22,6 @@ except ImportError:
     
 def md5_hexdigest(value):
     return md5(value).hexdigest()
-
-class InvalidRating(ValueError): pass
-class AuthRequired(TypeError): pass
-class CannotChangeVote(Exception): pass
 
 class Rating(object):
     def __init__(self, score, votes):
