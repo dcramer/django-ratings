@@ -6,7 +6,7 @@ class AddRatingView(object):
         """__call__(request, content_type_id, object_id, field_name, score)
         
         Adds a vote to the specified model field."""
-        instance = get_instance(content_type_id, object_id)
+        instance = self.get_instance(content_type_id, object_id)
         
         context = self.get_context(request)
         context['instance'] = instance
@@ -56,6 +56,6 @@ class AddRatingView(object):
         response.status_code = 403
         return response
         
-    def get_instance(content_type_id, object_id):
+    def get_instance(self, content_type_id, object_id):
         return ContentType.objects.filter(pk=content_type_id)\
             .get_object_for_this_type(pk=object_id)
