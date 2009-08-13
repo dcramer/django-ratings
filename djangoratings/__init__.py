@@ -91,7 +91,7 @@ class RatingManager(object):
             key             = self.field.key,
         )
 
-        if user and not user.is_authenticated():
+        if not (user and user.is_authenticated()):
             kwargs['user__isnull'] = True
             kwargs['ip_address'] = ip_address
         else:
@@ -242,14 +242,14 @@ class RatingField(IntegerField):
         self.name = name
 
         # Votes tally field
-        votes_field = PositiveIntegerField(
+        self.votes_field = PositiveIntegerField(
             editable=False, default=0, blank=True)
-        cls.add_to_class("%s_votes" % (self.name,), votes_field)
+        cls.add_to_class("%s_votes" % (self.name,), self.votes_field)
 
         # Score sum field
-        score_field = IntegerField(
+        self.score_field = IntegerField(
             editable=False, default=0, blank=True)
-        cls.add_to_class("%s_score" % (self.name,), score_field)
+        cls.add_to_class("%s_score" % (self.name,), self.score_field)
 
 
         self.key = md5_hexdigest(self.name)
@@ -263,6 +263,9 @@ class RatingField(IntegerField):
     def get_db_prep_lookup(self, lookup_type, value):
         # TODO: hack in support for __score and __votes
         raise NotImplementedError(self.get_db_prep_lookup)
+        # if lookup_type in ('score', 'votes'):
+        #     lookup_type = 
+        #     return self.score_field.get_db_prep_lookup()
         if lookup_type == 'exact':
             return [self.get_db_prep_save(value)]
         elif lookup_type == 'in':
