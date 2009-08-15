@@ -23,6 +23,8 @@ class AddRatingView(object):
             'score': score,
         })
         
+        had_voted = bool(field.get_rating_for_user(request.user, request.META['REMOTE_ADDR']))
+        
         try:
             field.add(score, request.user, request.META.get('REMOTE_ADDR'))
         except AuthRequired:
@@ -31,6 +33,8 @@ class AddRatingView(object):
             return self.invalid_rating_response(request, context)
         except CannotChangeVote:
             return self.cannot_change_vote_response(request, context)
+        if had_voted:
+            return self.rating_changed_response(request, context)
         return self.rating_added_response(request, context)
     
     def get_context(self, request, context={}):
@@ -38,6 +42,10 @@ class AddRatingView(object):
     
     def render_to_response(self, template, context, request):
         raise NotImplementedError
+
+    def rating_changed_response(self, request, context):
+        response = HttpResponse('Vote changed.')
+        return response
     
     def rating_added_response(self, request, context):
         response = HttpResponse('Vote recorded.')
