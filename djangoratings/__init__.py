@@ -262,6 +262,7 @@ class RatingField(IntegerField):
 
     def get_db_prep_lookup(self, lookup_type, value):
         # TODO: hack in support for __score and __votes
+        # TODO: order_by on this field should use the weighted algorithm
         raise NotImplementedError(self.get_db_prep_lookup)
         # if lookup_type in ('score', 'votes'):
         #     lookup_type = 

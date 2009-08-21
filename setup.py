@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-ratings',
-    version='0.2.1',
+    version='0.3.0',
     author='David Cramer',
     author_email='dcramer@gmail.com',
     description='Generic Ratings in Django',

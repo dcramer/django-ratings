@@ -3,6 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
 
+import datetime
+
 class Vote(models.Model):
     content_type    = models.ForeignKey(ContentType, related_name="votes")
     object_id       = models.PositiveIntegerField()
@@ -10,6 +12,8 @@ class Vote(models.Model):
     score           = models.IntegerField()
     user            = models.ForeignKey(User, blank=True, null=True, related_name="votes")
     ip_address      = models.IPAddressField()
+    date_added      = models.DateTimeField(default=datetime.datetime.now, editable=False)
+    date_changed    = models.DateTimeField(default=datetime.datetime.now, editable=False)
 
     content_object  = generic.GenericForeignKey()
 
@@ -18,6 +22,10 @@ class Vote(models.Model):
 
     def __unicode__(self):
         return "%s voted %s on %s" % (self.user_display, self.score, self.content_object)
+
+    def save(self, *args, **kwargs):
+        self.date_changed = datetime.datetime.now()
+        super(Vote, self).save(*args, **kwargs)
 
     def user_display(self):
         if self.user:
