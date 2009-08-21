@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
 
 class Vote(models.Model):
@@ -10,8 +11,19 @@ class Vote(models.Model):
     user            = models.ForeignKey(User, blank=True, null=True, related_name="votes")
     ip_address      = models.IPAddressField()
 
+    content_object  = generic.GenericForeignKey()
+
     class Meta:
         unique_together = (('content_type', 'object_id', 'key', 'user', 'ip_address'))
+
+    def __unicode__(self):
+        return "%s voted %s on %s" % (self.user_display, self.score, self.content_object)
+
+    def user_display(self):
+        if self.user:
+            return "%s (%s)" % (self.user.username, self.ip_address)
+        return self.ip_address
+    user_display = property(user_display)
 
     def partial_ip_address(self):
         ip = self.ip_address.split('.')
@@ -25,6 +37,11 @@ class Score(models.Model):
     key             = models.CharField(max_length=32)
     score           = models.IntegerField()
     votes           = models.PositiveIntegerField()
-    
+
+    content_object  = generic.GenericForeignKey()
+
     class Meta:
         unique_together = (('content_type', 'object_id', 'key'),)
+
+    def __unicode__(self):
+        return "%s scored %s with %s votes" % (self.content_object, self.score, self.votes)

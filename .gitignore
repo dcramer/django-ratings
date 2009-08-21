@@ -1,3 +1,4 @@
 build/
 dist/
 *.pyc
+django_ratings.egg-info/
