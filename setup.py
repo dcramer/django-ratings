@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-ratings',
-    version='0.3.0',
+    version=".".join(map(str, djangosphinx.__version__)),
     author='David Cramer',
     author_email='dcramer@gmail.com',
     description='Generic Ratings in Django',

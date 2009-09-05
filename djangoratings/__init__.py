@@ -1,3 +1,5 @@
+__version__ = (0, 3, 0)
+
 from django.db.models import IntegerField, PositiveIntegerField
 from django.conf import settings
 
