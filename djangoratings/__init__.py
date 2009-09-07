@@ -1,4 +1,5 @@
 import os.path
+import warnings
 
 __all__ = ('__version__', '__build__')
 
