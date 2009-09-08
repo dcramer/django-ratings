@@ -1,8 +1,6 @@
 import os.path
 import warnings
 
-__all__ = ('__version__', '__build__')
-
 __version__ = (0, 3, 0)
 
 def _get_git_revision(path):
