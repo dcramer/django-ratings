@@ -14,4 +14,11 @@ setup(
     install_requires=['django'],
     packages=find_packages(),
     include_package_data=True,
+    classifiers=[
+        "Framework :: Django",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development"
+    ],
 )
