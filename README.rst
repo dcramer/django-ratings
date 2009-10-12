@@ -88,7 +88,7 @@ Get that same percentage, but excluding your `weight`::
 Generic Views: Processing Votes
 ===============================
 
-The best way to use the generic views is by extending it, or calling it within your own code.
+The best way to use the generic views is by extending it, or calling it within your own code::
 
 	from djangoratings.views import AddRatingFromModule
 	
