@@ -1,8 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 
 from exceptions import *
-
+        
 class AddRatingView(object):
     def __call__(self, request, content_type_id, object_id, field_name, score):
         """__call__(request, content_type_id, object_id, field_name, score)
@@ -74,3 +74,17 @@ class AddRatingView(object):
     def get_instance(self, content_type_id, object_id):
         return ContentType.objects.get(pk=content_type_id)\
             .get_object_for_this_type(pk=object_id)
+
+
+class AddRatingFromModel(AddRatingView):
+    def __call__(self, request, model, app_label, object_id, field_name, score):
+        """__call__(request, module_name, app_label, field_name, score)
+        
+        Adds a vote to the specified model field."""
+        try:
+            content_type = ContentType.objects.get(model=model, app_label=app_label)
+        except ContentType.DoesNotExist:
+            raise Http404('Invalid `model` or `app_label`.')
+        
+        return super(AddRatingFromLabels, self).__call__(request, content_type.id,
+            object_id, field_name, score)

@@ -83,3 +83,37 @@ Get the percent of voters approval::
 Get that same percentage, but excluding your `weight`::
 
 	myinstance.rating.get_real_percent()
+
+===============================
+Generic Views: Processing Votes
+===============================
+
+The best way to use the generic views is by extending it, or calling it within your own code.
+
+	from djangoratings.views import AddRatingFromModule
+	
+	urlpatterns = patterns('',
+	    url(r'rate-my-post/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
+	        'app_label': 'blogs',
+	        'model': 'post',
+	    }),
+	)
+
+Another example, on Nibbits we use a basic API interface, and we simply call the ``AddRatingView`` within our own view::
+
+
+	from djangoratings.views import AddRatingView
+	
+	# For the sake of this actually looking like documentation:
+	params = {
+	    'content_type_id': 23,
+	    'object_id': 34,
+	    'field_name': 'ratings', # this should match the field name defined in your model
+	    'score': 1, # the score value they're sending
+	}
+	response = AddRatingView()(request, **params)
+	if response.status_code == 200:
+	    if response.content == 'Vote recorded.':
+	        request.user.add_xp(settings.XP_BONUSES['submit-rating'])
+	    return {'message': response.content, 'score': params['score']}
+	return {'error': 9, 'message': response.content}
