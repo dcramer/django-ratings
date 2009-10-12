@@ -2,14 +2,14 @@
 django-ratings
 ##############
 
-A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds `<field>_score`, and `<field>_votes` fields, which are both integer fields.
+A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds ``<field>_score``, and ``<field>_votes`` fields, which are both integer fields.
 
 
 ============
 Installation
 ============
 
-You will need to add `djangoratings` to your `INSTALLED_APPS`::
+You will need to add ``djangoratings`` to your ``INSTALLED_APPS``::
 
 	INSTALLED_APPS = (
 	    'django.contrib.admin',
@@ -19,7 +19,7 @@ You will need to add `djangoratings` to your `INSTALLED_APPS`::
 	    'djangoratings',
 	)
 
-Finally, run `python manage.py syncdb` in your appication's directory to create the tables.
+Finally, run ``python manage.py syncdb`` in your application's directory to create the tables.
 
 =================
 Setup your models
@@ -40,7 +40,7 @@ Alternatively you could do something like::
 	    rating = AnonymousRatingField(range=10)
 
 If you'd like to use the built-in weighting methods, to make it appear more difficult for an object
-to obtain a higher rating, you can use the `weight` kwarg::
+to obtain a higher rating, you can use the ``weight`` kwarg::
 
 	class MyModel(models.Model):
 	    rating = RatingField(range=10, weight=10)
@@ -65,7 +65,7 @@ Accessing information about the rating of an object is also easy::
 
 How you can order by top-rated using an algorithm (example from Nibbits.com source)::
 
-	# In this example, `rating` is the attribute name for your `RatingField`
+	# In this example, ``rating`` is the attribute name for your ``RatingField``
 	qs = qs.extra(select={
 	    'rating': '((100/%s*rating_score/(rating_votes+%s))+100)/2' % (MyModel.rating.range, MyModel.rating.weight)
 	})
@@ -73,14 +73,14 @@ How you can order by top-rated using an algorithm (example from Nibbits.com sour
 
 Get recent ratings for your instance::
 
-	# This returns `Vote` instances.
+	# This returns ``Vote`` instances.
 	myinstance.rating.get_ratings()[0:5]
 
 Get the percent of voters approval::
 
 	myinstance.rating.get_percent()
 
-Get that same percentage, but excluding your `weight`::
+Get that same percentage, but excluding your ``weight``::
 
 	myinstance.rating.get_real_percent()
 
