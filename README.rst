@@ -1,9 +1,11 @@
+##############
 django-ratings
---------------
+##############
 
 A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds `<field>_score`, and `<field>_votes` fields, which are both integer fields.
 
 
+============
 Installation
 ============
 
@@ -19,6 +21,7 @@ You will need to add `djangoratings` to your `INSTALLED_APPS`::
 
 Finally, run `python manage.py syncdb` in your appication's directory to create the tables.
 
+=================
 Setup your models
 =================
 
@@ -42,6 +45,7 @@ to obtain a higher rating, you can use the `weight` kwarg::
 	class MyModel(models.Model):
 	    rating = RatingField(range=10, weight=10)
 
+===================
 Using the model API
 ===================
 
