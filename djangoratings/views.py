@@ -86,5 +86,5 @@ class AddRatingFromModel(AddRatingView):
         except ContentType.DoesNotExist:
             raise Http404('Invalid `model` or `app_label`.')
         
-        return super(AddRatingFromLabels, self).__call__(request, content_type.id,
+        return super(AddRatingFromModel, self).__call__(request, content_type.id,
             object_id, field_name, score)
