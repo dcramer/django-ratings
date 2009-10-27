@@ -90,12 +90,13 @@ Generic Views: Processing Votes
 
 The best way to use the generic views is by extending it, or calling it within your own code::
 
-	from djangoratings.views import AddRatingFromModule
+	from djangoratings.views import AddRatingFromModel
 	
 	urlpatterns = patterns('',
 	    url(r'rate-my-post/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
 	        'app_label': 'blogs',
 	        'model': 'post',
+	        'field_name': 'rating',
 	    }),
 	)
 
