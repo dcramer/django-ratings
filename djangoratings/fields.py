@@ -43,7 +43,7 @@ class RatingManager(object):
         Returns the weighted percentage of the score from min-max values"""
         if not (self.votes and self.score):
             return 0
-        return 100/self.field.range*self.get_rating()
+        return 100 * (self.get_rating() - self.votes) / (self.field.range - 1)
     
     def get_real_percent(self):
         """get_real_percent()
@@ -51,7 +51,7 @@ class RatingManager(object):
         Returns the unmodified percentage of the score based on a 0-point scale."""
         if not (self.votes and self.score):
             return 0
-        return 100/self.field.range*self.get_real_rating()
+        return 100 * (self.get_real_rating() - self.votes) / (self.field.range - 1)
     
     def get_ratings(self):
         """get_ratings()
