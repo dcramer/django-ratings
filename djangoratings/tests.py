@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 
 from exceptions import *
+from models import Vote
 from fields import AnonymousRatingField, RatingField
 
 settings.RATINGS_VOTES_PER_IP = 1
@@ -44,3 +45,12 @@ class RatingTestCase(unittest.TestCase):
         self.assertEquals(instance.rating2.votes, 1)
         
         self.assertRaises(IPLimitReached, instance.rating2.add, score=2, user=user2, ip_address='127.0.0.3')
+
+        Vote.objects.delete_from_ip_address('127.0.0.3')
+        
+        instance = RatingTestModel.objects.get(pk=instance.pk)
+
+        self.assertEquals(instance.rating.score, 4)
+        self.assertEquals(instance.rating.votes, 2)
+        self.assertEquals(instance.rating2.score, 0)
+        self.assertEquals(instance.rating2.votes, 0)

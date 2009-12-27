@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 
 import datetime
 
+from managers import VoteManager
+
 class Vote(models.Model):
     content_type    = models.ForeignKey(ContentType, related_name="votes")
     object_id       = models.PositiveIntegerField()
@@ -14,6 +16,8 @@ class Vote(models.Model):
     ip_address      = models.IPAddressField()
     date_added      = models.DateTimeField(default=datetime.datetime.now, editable=False)
     date_changed    = models.DateTimeField(default=datetime.datetime.now, editable=False)
+
+    objects         = VoteManager()
 
     content_object  = generic.GenericForeignKey()
 

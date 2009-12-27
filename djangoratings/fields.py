@@ -291,7 +291,13 @@ class RatingField(IntegerField):
 
         self.key = md5_hexdigest(self.name)
 
-        setattr(cls, name, RatingCreator(self))
+        field = RatingCreator(self)
+
+        if not hasattr(cls, '_djangoratings'):
+            cls._djangoratings = []
+        cls._djangoratings.append(self)
+
+        setattr(cls, name, field)
 
     def get_db_prep_save(self, value):
         # XXX: what happens here?
