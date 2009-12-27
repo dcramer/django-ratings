@@ -5,7 +5,7 @@ import forms
 import itertools
 
 from models import Vote, Score
-
+from default_settings import RATINGS_VOTES_PER_IP
 from exceptions import *
 
 if 'django.contrib.contenttypes' not in settings.INSTALLED_APPS:
@@ -57,7 +57,7 @@ class RatingManager(object):
         """get_ratings()
         
         Returns a Vote QuerySet for this rating field."""
-        return Vote.objects.filter(content_type=self.get_content_type(), object_id=self.instance.id, key=self.field.key)
+        return Vote.objects.filter(content_type=self.get_content_type(), object_id=self.instance.pk, key=self.field.key)
         
     def get_rating(self):
         """get_rating()
@@ -87,7 +87,7 @@ class RatingManager(object):
         Returns the rating for a user or anonymous IP."""
         kwargs = dict(
             content_type    = self.get_content_type(),
-            object_id       = self.instance.id,
+            object_id       = self.instance.pk,
             key             = self.field.key,
         )
 
@@ -103,7 +103,7 @@ class RatingManager(object):
             pass
         return
         
-    def add(self, score, user, ip_address):
+    def add(self, score, user, ip_address, commit=True):
         """add(score, user, ip_address)
         
         Used to add a rating to an object."""
@@ -121,7 +121,7 @@ class RatingManager(object):
         
         if is_anonymous:
             user = None
-        
+
         defaults = dict(
             score = score,
             ip_address = ip_address,
@@ -129,7 +129,7 @@ class RatingManager(object):
         
         kwargs = dict(
             content_type    = self.get_content_type(),
-            object_id       = self.instance.id,
+            object_id       = self.instance.pk,
             key             = self.field.key,
             user            = user,
         )
@@ -139,6 +139,15 @@ class RatingManager(object):
         try:
             rating, created = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
+            if getattr(settings, 'RATINGS_VOTES_PER_IP', RATINGS_VOTES_PER_IP):
+                num_votes = Vote.objects.filter(
+                    content_type=kwargs['content_type'],
+                    object_id=kwargs['object_id'],
+                    key=kwargs['key'],
+                    ip_address=ip_address,
+                ).count()
+                if num_votes >= getattr(settings, 'RATINGS_VOTES_PER_IP', RATINGS_VOTES_PER_IP):
+                    raise IPLimitReached()
             kwargs.update(defaults)
             rating, created = Vote.objects.create(**kwargs), True
             
@@ -156,7 +165,8 @@ class RatingManager(object):
             self.votes += 1
         if has_changed:
             self.score += rating.score
-            self.instance.save()
+            if commit:
+                self.instance.save()
             #setattr(self.instance, self.field.name, Rating(score=self.score, votes=self.votes))
             
             defaults = dict(
@@ -166,7 +176,7 @@ class RatingManager(object):
             
             kwargs = dict(
                 content_type    = self.get_content_type(),
-                object_id       = self.instance.id,
+                object_id       = self.instance.pk,
                 key             = self.field.key,
             )
             
@@ -200,6 +210,34 @@ class RatingManager(object):
         if self.content_type is None:
             self.content_type = ContentType.objects.get_for_model(self.instance)
         return self.content_type
+    
+    def _update(self, commit=False):
+        """Forces an update of this rating (useful for when Vote objects are removed)."""
+        votes = Vote.objects.filter(
+            content_type    = self.get_content_type(),
+            object_id       = self.instance.pk,
+            key             = self.field.key,
+        )
+        obj_score = sum([v.score for v in votes])
+        obj_votes = len(votes)
+
+        score, created = Score.objects.get_or_create(
+            content_type    = self.get_content_type(),
+            object_id       = self.instance.pk,
+            key             = self.field.key,
+            defaults        = dict(
+                score       = obj_score,
+                votes       = obj_votes,
+            )
+        )
+        if not created:
+            score.score = obj_score
+            score.votes = obj_votes
+            score.save()
+        self.score = obj_score
+        self.votes = obj_votes
+        if commit:
+            self.instance.save()
 
 class RatingCreator(object):
     def __init__(self, field):
@@ -250,7 +288,6 @@ class RatingField(IntegerField):
         self.score_field = IntegerField(
             editable=False, default=0, blank=True)
         cls.add_to_class("%s_score" % (self.name,), self.score_field)
-
 
         self.key = md5_hexdigest(self.name)
 

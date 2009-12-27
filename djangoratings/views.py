@@ -2,7 +2,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, Http404
 
 from exceptions import *
-        
+from django.conf import settings
+from default_settings import RATINGS_VOTES_PER_IP
+
 class AddRatingView(object):
     def __call__(self, request, content_type_id, object_id, field_name, score):
         """__call__(request, content_type_id, object_id, field_name, score)
@@ -25,8 +27,12 @@ class AddRatingView(object):
         
         had_voted = bool(field.get_rating_for_user(request.user, request.META['REMOTE_ADDR']))
         
+        context['had_voted'] = had_voted
+                    
         try:
             field.add(score, request.user, request.META.get('REMOTE_ADDR'))
+        except IPLimitReached:
+            return self.too_many_votes_from_ip_response(request, context)
         except AuthRequired:
             return self.authentication_required_response(request, context)
         except InvalidRating:
@@ -42,6 +48,10 @@ class AddRatingView(object):
     
     def render_to_response(self, template, context, request):
         raise NotImplementedError
+
+    def too_many_votes_from_ip_response(self, request, context):
+        response = HttpResponse('Too many votes from this IP address for this object.')
+        return response
 
     def rating_changed_response(self, request, context):
         response = HttpResponse('Vote changed.')

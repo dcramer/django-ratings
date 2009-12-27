@@ -102,7 +102,6 @@ The best way to use the generic views is by extending it, or calling it within y
 
 Another example, on Nibbits we use a basic API interface, and we simply call the ``AddRatingView`` within our own view::
 
-
 	from djangoratings.views import AddRatingView
 	
 	# For the sake of this actually looking like documentation:
@@ -118,3 +117,7 @@ Another example, on Nibbits we use a basic API interface, and we simply call the
 	        request.user.add_xp(settings.XP_BONUSES['submit-rating'])
 	    return {'message': response.content, 'score': params['score']}
 	return {'error': 9, 'message': response.content}
+
+*New in 0.3.5*: There is now a setting, ``RATINGS_VOTES_PER_IP``, to limit the number of unique IPs per object/rating-field combination. This is useful if you have issues with users registering multiple accounts to vote on a single object::
+
+	RATINGS_VOTES_PER_IP = 3
