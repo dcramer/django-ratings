@@ -118,6 +118,11 @@ Another example, on Nibbits we use a basic API interface, and we simply call the
 	    return {'message': response.content, 'score': params['score']}
 	return {'error': 9, 'message': response.content}
 
+
+==========================
+Limit Votes Per IP Address
+==========================
+
 *New in 0.3.5*: There is now a setting, ``RATINGS_VOTES_PER_IP``, to limit the number of unique IPs per object/rating-field combination. This is useful if you have issues with users registering multiple accounts to vote on a single object::
 
 	RATINGS_VOTES_PER_IP = 3
