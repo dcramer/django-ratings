@@ -46,7 +46,8 @@ class RatingTestCase(unittest.TestCase):
         
         self.assertRaises(IPLimitReached, instance.rating2.add, score=2, user=user2, ip_address='127.0.0.3')
 
-        Vote.objects.delete_from_ip_address('127.0.0.3')
+        # Test deletion hooks
+        Vote.objects.filter(ip_address='127.0.0.3').delete()
         
         instance = RatingTestModel.objects.get(pk=instance.pk)
 
