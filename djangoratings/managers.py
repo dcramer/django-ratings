@@ -23,7 +23,7 @@ class VoteQuerySet(QuerySet):
         # TODO: this could be improved
         for obj in to_update:
             for field in getattr(obj, '_djangoratings', []):
-                getattr(obj, field.name)._update()
+                getattr(obj, field.name)._update(commit=False)
             obj.save()
         
         return retval
