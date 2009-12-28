@@ -16,7 +16,7 @@ class VoteQuerySet(QuerySet):
         for content_type, objects in itertools.groupby(qs, key=lambda x: x[0]):
             model_class = ContentType.objects.get(pk=content_type).model_class()
             if model_class:
-                to_update.extend(list(model_class.filter(pk__in=list(objects)[0])))
+                to_update.extend(list(model_class.objects.filter(pk__in=list(objects)[0])))
         
         retval = super(VoteQuerySet, self).delete(*args, **kwargs)
         
