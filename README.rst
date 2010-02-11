@@ -45,6 +45,12 @@ to obtain a higher rating, you can use the ``weight`` kwarg::
 	class MyModel(models.Model):
 	    rating = RatingField(range=10, weight=10)
 
+``RatingField`` allows the following options:
+
+* ``range = 2`` - The range in which values are accepted. For example, a range of 2, says there are 2 possible vote scores.
+* ``can_change_vote = False`` - Allow the modification of votes that have already been made.
+* ``allow_anonymous = False`` - Whether to allow anonymous votes.
+
 ===================
 Using the model API
 ===================
@@ -55,7 +61,7 @@ And adding votes is also simple::
 
 Retrieving votes is just as easy::
 
-	myinstance_ai.get_rating(request.user, request.META['REMOTE_ADDR'])
+	myinstance.rating.get_rating(request.user, request.META['REMOTE_ADDR'])
 
 Accessing information about the rating of an object is also easy::
 
