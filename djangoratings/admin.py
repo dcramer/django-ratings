@@ -8,7 +8,7 @@ class VoteAdmin(admin.ModelAdmin):
 
 class ScoreAdmin(admin.ModelAdmin):
     list_display = ('content_object', 'score', 'votes')
-    list_filter = ('score', 'content_type')
+    list_filter = ('content_type',)
 
 admin.site.register(Vote, VoteAdmin)
 admin.site.register(Score, ScoreAdmin)
