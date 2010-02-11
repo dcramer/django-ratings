@@ -81,8 +81,8 @@ class RatingManager(object):
             return 0
         return float(self.score)/self.votes
     
-    def get_rating_for_user(self, user, ip_address):
-        """get_rating_for_user(user, ip_address)
+    def get_rating_for_user(self, user, ip_address=None):
+        """get_rating_for_user(user, ip_address=None)
         
         Returns the rating for a user or anonymous IP."""
         kwargs = dict(
@@ -92,6 +92,8 @@ class RatingManager(object):
         )
 
         if not (user and user.is_authenticated()):
+            if not ip_address:
+                raise ValueError('``user`` or ``ip_address`` must be present.')
             kwargs['user__isnull'] = True
             kwargs['ip_address'] = ip_address
         else:

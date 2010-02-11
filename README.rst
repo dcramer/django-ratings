@@ -138,12 +138,31 @@ Template Tags
 
 Right now django-ratings has limited support for template tags, and only for Django.
 
---------------
-rating_by_user
---------------
+-----------------
+rating_by_request
+-----------------
 
 Retrieves the ``Vote`` cast by a user on a particular object and
 stores it in a context variable. If the user has not voted, the
 context variable will be 0::
 
-	{% rating_by_user user on widget as vote %}
+	{% rating_by_request request on instance.field as vote %}
+
+If you are using Coffin, a better approach might be::
+
+	{% with instance.field_name.get_rating_for_user(request.user, request.META['REMOTE_ADDR']) as vote %}
+		Do some magic with {{ vote }}
+	{% endwith %}
+
+--------------
+rating_by_user
+--------------
+
+It is recommended that you use rating_by_request as you will gain full support
+for anonymous users if they are enabled
+
+Retrieves the ``Vote`` cast by a user on a particular object and
+stores it in a context variable. If the user has not voted, the
+context variable will be 0::
+
+	{% rating_by_user user on instance.field as vote %}
