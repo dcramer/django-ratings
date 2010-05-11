@@ -246,8 +246,6 @@ class RatingCreator(object):
         self.field = field
         self.votes_field_name = "%s_votes" % (self.field.name,)
         self.score_field_name = "%s_score" % (self.field.name,)
-        # we need a unique key incase there are multiple ratings on a model
-        self._rating_manager = None
 
     def __get__(self, instance, type=None):
         if instance is None:
