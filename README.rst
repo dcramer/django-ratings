@@ -154,6 +154,8 @@ If you are using Coffin, a better approach might be::
 		Do some magic with {{ vote }}
 	{% endwith %}
 
+To use the ``request`` context variable you will need to add ``django.core.context_processors.request`` to the ``TEMPLATE_CONTEXT_PROCESSORS`` setting.
+
 --------------
 rating_by_user
 --------------
