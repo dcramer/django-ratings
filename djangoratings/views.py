@@ -14,7 +14,7 @@ class AddRatingView(object):
         
         try:
             instance = self.get_instance(content_type_id, object_id)
-        except content_type.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404('Object does not exist')
         
         context = self.get_context(request)
