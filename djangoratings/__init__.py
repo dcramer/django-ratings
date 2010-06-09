@@ -31,7 +31,10 @@ def lazy_object(location):
     def inner(*args, **kwargs):
         parts = location.rsplit('.', 1)
         warnings.warn('`djangoratings.%s` is deprecated. Please use `%s` instead.' % (parts[1], location), DeprecationWarning)
-        imp = __import__(parts[0], globals(), locals(), [parts[1]], -1)
+        try:
+            imp = __import__(parts[0], globals(), locals(), [parts[1]], -1)
+        except:
+            imp = __import__(parts[0], globals(), locals(), [parts[1]])
         func = getattr(imp, parts[1])
         if callable(func):
             return func(*args, **kwargs)
