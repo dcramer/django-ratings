@@ -9,7 +9,6 @@ setup(
     author_email='dcramer@gmail.com',
     description='Generic Ratings in Django',
     url='http://github.com/dcramer/django-ratings',
-    install_requires=['django'],
     packages=find_packages(),
     include_package_data=True,
     classifiers=[
