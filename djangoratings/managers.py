@@ -55,6 +55,7 @@ class SimilarUserManager(Manager):
             v=Vote._meta.db_table,
             sm=self.model._meta.db_table,
             m=model_class._meta.db_table,
+            io=IgnoredObject._meta.db_table,
         )
         
         objects = model_class._default_manager.extra(
@@ -63,8 +64,12 @@ class SimilarUserManager(Manager):
                 '%(v)s.object_id = %(m)s.id and %(v)s.content_type_id = %%s' % params,
                 '%(v)s.user_id IN (select to_user_id from %(sm)s where from_user_id = %%s and exclude = 0)' % params,
                 '%(v)s.score >= %%s' % params,
+                # Exclude already rated maps
+                '%(v)s.object_id NOT IN (select object_id from %(v)s where content_type_id = %(v)s.content_type_id and user_id = %%s)' % params,
+                # IgnoredObject exclusions
+                '%(v)s.object_id NOT IN (select object_id from %(io)s where content_type_id = %(v)s.content_type_id and user_id = %%s)' % params,
             ],
-            params=[content_type.id, user.id, min_score]
+            params=[content_type.id, user.id, min_score, user.id, user.id]
         ).distinct()
 
         # objects = model_class._default_manager.filter(pk__in=content_type.votes.extra(
