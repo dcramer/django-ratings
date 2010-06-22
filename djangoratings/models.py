@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 import datetime
 
-from managers import VoteManager
+from managers import VoteManager, SimilarUserManager
 
 class Vote(models.Model):
     content_type    = models.ForeignKey(ContentType, related_name="votes")
@@ -43,8 +43,6 @@ class Vote(models.Model):
         return '.'.join(ip)
     partial_ip_address = property(partial_ip_address)
 
-# Thanks ruby guys: http://www.trampolinesystems.com/calculating-pearsons-corellation-coefficient-in-sql/uncategorized
-
 """
 insert into djangoratings_score (content_type_id, object_id, mean)
   select content_type_id, object_id, sum(score) / (select count(distinct user_id) from djangoratings_vote) mean
@@ -69,8 +67,6 @@ class Score(models.Model):
     key             = models.CharField(max_length=32)
     score           = models.IntegerField()
     votes           = models.PositiveIntegerField()
-    mean            = models.FloatField(default=0.0)
-    stddev          = models.FloatField(default=0.0)
     
     content_object  = generic.GenericForeignKey()
 
@@ -81,48 +77,27 @@ class Score(models.Model):
         return "%s scored %s with %s votes" % (self.content_object, self.score, self.votes)
 
 """
-insert into djangoratings_scorecorrelation (
-    content_type_id,
-    object_id,
-    to_content_type_id,
-    to_object_id,
-    rank
-  )
-  select sf.content_type_id,
-         sf.object_id,
-         sf.to_content_type_id,
-         sf.to_object_id,
-         (sf.sum / (select count(1) from auth_user where is_active = 1)
-          - stats1.mean * stats2.mean
-         ) -- covariance
-         / (stats1.stddev * stats2.stddev)
-  from (
-    select r1.content_type_id content_type_id,
-           r1.object_id object_id,
-           r2.content_type_id to_content_type_id,
-           r2.object_id to_object_id,
-           sum(r1.score * r2.score) sum
-    from djangoratings_vote r1
-    join djangoratings_vote r2
-    on r1.user_id = r2.user_id
-        and r1.user_id is not null
-    group by content_type_id, object_id, to_content_type_id, to_object_id
-  ) sf
-  join djangoratings_score stats1
-    on stats1.content_type_id = sf.content_type_id
-        and stats1.object_id = sf.object_id
-  join djangoratings_score stats2
-      on stats2.content_type_id = sf.to_content_type_id
-          and stats2.object_id = sf.to_object_id;
- """
-class ScoreCorrelation(models.Model):
-    content_type    = models.ForeignKey(ContentType, related_name="djr_sc_1")
-    object_id       = models.PositiveIntegerField()
-    to_content_type = models.ForeignKey(ContentType, related_name="djr_sc_2")
-    to_object_id    = models.PositiveIntegerField()
-    rank            = models.FloatField()
+insert into djangoratings_similaruser
+  (to_user_id, from_user_id, agrees, disagrees)
+  select v1.user_id, v2.user_id,
+         sum(if(v2.score != v1.score, 1, 0)) as agrees,
+         sum(if(v2.score = v1.score, 1, 0)) as disagrees
+    from djangoratings_vote as v1
+      inner join djangoratings_vote as v2
+        on v1.user_id != v2.user_id
+        and v1.object_id = v2.object_id
+        and v1.content_type_id = v2.content_type_id
+    group by v1.user_id, v2.user_id
+    having agrees / disagrees > 3
+  on duplicate key update agrees = values(agrees), disagrees = values(disagrees);
+"""
+class SimilarUser(models.Model):
+    from_user       = models.ForeignKey(User, related_name="similar_users")
+    to_user         = models.ForeignKey(User, related_name="similar_users_from")
+    agrees          = models.PositiveIntegerField(default=0)
+    disagrees       = models.PositiveIntegerField(default=0)
+    
+    objects         = SimilarUserManager()
     
     class Meta:
-        unique_together = (('content_type', 'object_id', 'to_content_type', 'to_object_id'),)
-    
-    
+        unique_together = (('from_user', 'to_user'),)

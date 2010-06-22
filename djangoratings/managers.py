@@ -44,3 +44,22 @@ class VoteManager(Manager):
         else:
             vote_dict = {}
         return vote_dict
+
+class SimilarUserManager(Manager):
+    def get_recommendations(self, user, model_class, offset=0, limit=10):
+        content_type = ContentType.objects.get_for_model(model_class)
+
+        votes = content_type.votes.extra(
+            where = ['user_id IN (select from_user_id from %s where to_user_id = %%d)' % (self.model._meta.db_table,)],
+            params = [user.id],
+        ).filter(score__gte=4).distinct().values_list('object_id', flat=True)[offset:limit]
+
+        # Thank you Django, for not working.. ever
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute(str(votes.query))
+        object_ids = list(r[0] for r in cursor.fetchall())
+
+        objects = model_class._default_manager.filter(pk__in=object_ids)
+        
+        return objects
