@@ -46,27 +46,34 @@ class VoteManager(Manager):
         return vote_dict
 
 class SimilarUserManager(Manager):
-    def get_recommendations(self, user, model_class, min_score=1, offset=0, limit=10):
+    def get_recommendations(self, user, model_class, min_score=1):
         from djangoratings.models import Vote, IgnoredObject
         
         content_type = ContentType.objects.get_for_model(model_class)
+        
+        params = dict(
+            v=Vote._meta.db_table,
+            sm=self.model._meta.db_table,
+            m=model_class._meta.db_table,
+        )
+        
+        objects = model_class._default_manager.extra(
+            tables=[params['v']],
+            where=[
+                '%(v)s.object_id = %(m)s.id and %(v)s.content_type_id = %%s' % params,
+                '%(v)s.user_id IN (select to_user_id from %(sm)s where from_user_id = %%s and exclude = 0)' % params,
+                '%(v)s.score >= %%s' % params,
+            ],
+            params=[content_type.id, user.id, min_score]
+        ).distinct()
 
-        votes = content_type.votes.extra(
-            where = ['user_id IN (select to_user_id from %s where from_user_id = %%d and exclude = 0)' % (self.model._meta.db_table,)],
-            params = [user.id],
-        ).filter(score__gte=min_score).exclude(
-            object_id__in=IgnoredObject.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True),
-        ).exclude(
-            object_id__in=Vote.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True)
-        ).distinct().values_list('object_id', flat=True)[offset:limit]
-
-        # Thank you Django, for not working.. ever
-        from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute(str(votes.query))
-        object_ids = list(r[0] for r in cursor.fetchall())
-
-        objects = list(model_class._default_manager.filter(pk__in=object_ids))
+        # objects = model_class._default_manager.filter(pk__in=content_type.votes.extra(
+        #     where=['user_id IN (select to_user_id from %s where from_user_id = %d and exclude = 0)' % (self.model._meta.db_table, user.pk)],
+        # ).filter(score__gte=min_score).exclude(
+        #     object_id__in=IgnoredObject.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True),
+        # ).exclude(
+        #     object_id__in=Vote.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True)
+        # ).distinct().values_list('object_id', flat=True))
         
         return objects
     

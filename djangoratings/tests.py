@@ -89,25 +89,25 @@ class RecommendationsTestCase(unittest.TestCase):
 
         self.assertEquals(SimilarUser.objects.count(), 2)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 4)
         
         ct = ContentType.objects.get_for_model(RatingTestModel)
         
         IgnoredObject.objects.create(user=self.user2, content_type=ct, object_id=self.instance2.pk)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 3)
 
         IgnoredObject.objects.create(user=self.user2, content_type=ct, object_id=self.instance3.pk)
         IgnoredObject.objects.create(user=self.user2, content_type=ct, object_id=self.instance4.pk)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 1)
         self.assertEquals(recs, [self.instance5])
         
         self.instance5.rating.add(score=1, user=self.user2, ip_address='127.0.0.2')
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 0)
     
     def testSimilarUsers(self):
@@ -126,7 +126,7 @@ class RecommendationsTestCase(unittest.TestCase):
 
         self.assertEquals(SimilarUser.objects.count(), 2)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 2)
         
         self.instance4.rating.add(score=1, user=self.user2, ip_address='127.0.0.2')
@@ -135,7 +135,7 @@ class RecommendationsTestCase(unittest.TestCase):
 
         self.assertEquals(SimilarUser.objects.count(), 2)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 1)
         self.assertEquals(recs, [self.instance5])
         
@@ -145,5 +145,5 @@ class RecommendationsTestCase(unittest.TestCase):
 
         self.assertEquals(SimilarUser.objects.count(), 2)
 
-        recs = SimilarUser.objects.get_recommendations(self.user2, RatingTestModel)
+        recs = list(SimilarUser.objects.get_recommendations(self.user2, RatingTestModel))
         self.assertEquals(len(recs), 0)
