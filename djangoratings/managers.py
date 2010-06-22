@@ -46,13 +46,19 @@ class VoteManager(Manager):
         return vote_dict
 
 class SimilarUserManager(Manager):
-    def get_recommendations(self, user, model_class, offset=0, limit=10):
+    def get_recommendations(self, user, model_class, min_score=1, offset=0, limit=10):
+        from djangoratings.models import Vote, IgnoredObject
+        
         content_type = ContentType.objects.get_for_model(model_class)
 
         votes = content_type.votes.extra(
-            where = ['user_id IN (select from_user_id from %s where to_user_id = %%d)' % (self.model._meta.db_table,)],
+            where = ['user_id IN (select to_user_id from %s where from_user_id = %%d and exclude = 0)' % (self.model._meta.db_table,)],
             params = [user.id],
-        ).filter(score__gte=4).distinct().values_list('object_id', flat=True)[offset:limit]
+        ).filter(score__gte=min_score).exclude(
+            object_id__in=IgnoredObject.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True),
+        ).exclude(
+            object_id__in=Vote.objects.filter(content_type=content_type, user=user).values_list('object_id', flat=True)
+        ).distinct().values_list('object_id', flat=True)[offset:limit]
 
         # Thank you Django, for not working.. ever
         from django.db import connection
@@ -60,6 +66,37 @@ class SimilarUserManager(Manager):
         cursor.execute(str(votes.query))
         object_ids = list(r[0] for r in cursor.fetchall())
 
-        objects = model_class._default_manager.filter(pk__in=object_ids)
+        objects = list(model_class._default_manager.filter(pk__in=object_ids))
         
         return objects
+    
+    def update_recommendations(self):
+        # TODO: this is mysql only atm
+        # TODO: this doesnt handle scores that have multiple values (e.g. 10 points, 5 stars)
+        # due to it calling an agreement as score = score. We need to loop each rating instance
+        # and express the condition based on the range.
+        from djangoratings.models import Vote
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute('begin')
+        cursor.execute('truncate table %s' % (self.model._meta.db_table,))
+        cursor.execute("""insert into %(t1)s
+          (to_user_id, from_user_id, agrees, disagrees, exclude)
+          select v1.user_id, v2.user_id,
+                 sum(if(v2.score = v1.score, 1, 0)) as agrees,
+                 sum(if(v2.score != v1.score, 1, 0)) as disagrees, 0
+            from %(t2)s as v1
+              inner join %(t2)s as v2
+                on v1.user_id != v2.user_id
+                and v1.object_id = v2.object_id
+                and v1.content_type_id = v2.content_type_id
+            where v1.user_id is not null
+              and v2.user_id is not null
+            group by v1.user_id, v2.user_id
+            having agrees / (disagrees + 0.0001) > 3
+          on duplicate key update agrees = values(agrees), disagrees = values(disagrees);""" % dict(
+            t1=self.model._meta.db_table,
+            t2=Vote._meta.db_table,
+        ))
+        cursor.execute('commit')
+        cursor.close()
