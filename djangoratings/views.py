@@ -30,12 +30,12 @@ class AddRatingView(object):
             'score': score,
         })
         
-        had_voted = bool(field.get_rating_for_user(request.user, request.META['REMOTE_ADDR']))
+        had_voted = bool(field.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES))
         
         context['had_voted'] = had_voted
                     
         try:
-            field.add(score, request.user, request.META.get('REMOTE_ADDR'))
+            adds = field.add(score, request.user, request.META.get('REMOTE_ADDR'), request.COOKIES)
         except IPLimitReached:
             return self.too_many_votes_from_ip_response(request, context)
         except AuthRequired:
@@ -45,8 +45,8 @@ class AddRatingView(object):
         except CannotChangeVote:
             return self.cannot_change_vote_response(request, context)
         if had_voted:
-            return self.rating_changed_response(request, context)
-        return self.rating_added_response(request, context)
+            return self.rating_changed_response(request, context, adds)
+        return self.rating_added_response(request, context, adds)
     
     def get_context(self, request, context={}):
         return context
@@ -58,12 +58,16 @@ class AddRatingView(object):
         response = HttpResponse('Too many votes from this IP address for this object.')
         return response
 
-    def rating_changed_response(self, request, context):
+    def rating_changed_response(self, request, context, adds={}):
         response = HttpResponse('Vote changed.')
+        if 'cookie' in adds:
+            response.set_cookie(adds['cookie_name'], adds['cookie'], 31536000)
         return response
     
-    def rating_added_response(self, request, context):
+    def rating_added_response(self, request, context, adds={}):
         response = HttpResponse('Vote recorded.')
+        if 'cookie' in adds:
+            response.set_cookie(adds['cookie_name'], adds['cookie'], 31536000)
         return response
 
     def authentication_required_response(self, request, context):

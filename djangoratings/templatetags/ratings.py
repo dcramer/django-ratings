@@ -25,7 +25,7 @@ class RatingByRequestNode(template.Node):
         except (template.VariableDoesNotExist, AttributeError):
             return ''
         try:
-            vote = field.get_rating_for_user(request.user, request.META['REMOTE_ADDR'])
+            vote = field.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES)
             context[self.context_var] = vote
         except ObjectDoesNotExist:
             context[self.context_var] = 0

@@ -14,6 +14,7 @@ class Vote(models.Model):
     score           = models.IntegerField()
     user            = models.ForeignKey(User, blank=True, null=True, related_name="votes")
     ip_address      = models.IPAddressField()
+    cookie          = models.CharField(max_length=32, blank=True, null=True)
     date_added      = models.DateTimeField(default=datetime.datetime.now, editable=False)
     date_changed    = models.DateTimeField(default=datetime.datetime.now, editable=False)
 
@@ -22,7 +23,7 @@ class Vote(models.Model):
     content_object  = generic.GenericForeignKey()
 
     class Meta:
-        unique_together = (('content_type', 'object_id', 'key', 'user', 'ip_address'))
+        unique_together = (('content_type', 'object_id', 'key', 'user', 'ip_address', 'cookie'))
 
     def __unicode__(self):
         return u"%s voted %s on %s" % (self.user_display, self.score, self.content_object)

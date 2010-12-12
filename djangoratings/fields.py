@@ -3,6 +3,7 @@ from django.conf import settings
 
 import forms
 import itertools
+from datetime import datetime
 
 from models import Vote, Score
 from default_settings import RATINGS_VOTES_PER_IP
@@ -81,8 +82,8 @@ class RatingManager(object):
             return 0
         return float(self.score)/self.votes
     
-    def get_rating_for_user(self, user, ip_address=None):
-        """get_rating_for_user(user, ip_address=None)
+    def get_rating_for_user(self, user, ip_address=None, cookies={}):
+        """get_rating_for_user(user, ip_address=None, cookie=None)
         
         Returns the rating for a user or anonymous IP."""
         kwargs = dict(
@@ -98,14 +99,26 @@ class RatingManager(object):
             kwargs['ip_address'] = ip_address
         else:
             kwargs['user'] = user
+        
+        use_cookies = self.field.allow_anonymous and self.field.use_cookies
+        if use_cookies:
+            cookie_name = 'vote-%d.%d.%s' % (kwargs['content_type'].pk, kwargs['object_id'], kwargs['key'][:6],) # -> md5_hexdigest?
+            cookie = cookies.get(cookie_name)
+            if cookie:    
+                kwargs['cookie'] = cookie
+            else:
+                kwargs['cookie__isnull'] = True
+            
         try:
             rating = Vote.objects.get(**kwargs)
             return rating.score
+        except Vote.MultipleObjectsReturned:
+            pass
         except Vote.DoesNotExist:
             pass
         return
         
-    def add(self, score, user, ip_address, commit=True):
+    def add(self, score, user, ip_address, cookies={}, commit=True):
         """add(score, user, ip_address)
         
         Used to add a rating to an object."""
@@ -123,7 +136,7 @@ class RatingManager(object):
         
         if is_anonymous:
             user = None
-
+        
         defaults = dict(
             score = score,
             ip_address = ip_address,
@@ -137,6 +150,14 @@ class RatingManager(object):
         )
         if not user:
             kwargs['ip_address'] = ip_address
+        
+        use_cookies = self.field.allow_anonymous and self.field.use_cookies
+        if use_cookies:
+            cookie_name = 'vote-%d.%d.%s' % (kwargs['content_type'].pk, kwargs['object_id'], kwargs['key'][:6],) # -> md5_hexdigest?
+            cookie = cookies.get(cookie_name)
+            if not cookie:
+                cookie = datetime.now().strftime('%Y%m%d%H%M%S%f') # -> md5_hexdigest?
+            kwargs['cookie'] = cookie
 
         try:
             rating, created = Vote.objects.get(**kwargs), False
@@ -191,6 +212,12 @@ class RatingManager(object):
             if not created:
                 score.__dict__.update(defaults)
                 score.save()
+                
+        adds = {}
+        if use_cookies:
+            adds['cookie_name'] = cookie_name
+            adds['cookie'] = cookie
+        return adds
 
     def _get_votes(self, default=None):
         return getattr(self.instance, self.votes_field_name, default)
@@ -271,6 +298,7 @@ class RatingField(IntegerField):
         self.weight = kwargs.pop('weight', 0)
         self.range = kwargs.pop('range', 2)
         self.allow_anonymous = kwargs.pop('allow_anonymous', False)
+        self.use_cookies = kwargs.pop('use_cookies', False)
         kwargs['editable'] = False
         kwargs['default'] = 0
         kwargs['blank'] = True
