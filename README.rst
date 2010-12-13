@@ -5,24 +5,6 @@ django-ratings
 A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds ``<field>_score``, and ``<field>_votes`` fields, which are both integer fields.
 
 ============
-Fork purpose
-============
-
-------------
-COOKIE-auth
-------------
-
-I've added support for COOKIE-based authentication for anonymous users. Just set field option ``use_cookies = True``.
-Yes, it's less secure than authentication bu auth.user or by IP. But sometimes it's necessary - e.g. for sub-networks under the same IP. 
-
-------------
-Delete votes
-------------
-
-Another common functionality was added: ability to delete (or cancel) existent vote (e.g. if I'm using django-ratings for "Like/Un-Like" button). Use field option ``can_delete_vote = True``.
-Deletion works with any schema: auth.user, IP or COOKIES.
-
-============
 Installation
 ============
 
@@ -82,7 +64,8 @@ Retrieving votes is just as easy::
 
 	myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES) # last param is optional - only if you use COOKIES-auth
 
-*New in fork* You're also able to delete existent votes (if deletion enabled)::
+*New* You're also able to delete existent votes (if deletion enabled)::
+
 	myinstance.rating.delete(request.user, request.META['REMOTE_ADDR'], request.COOKIES) # last param is optional - only if you use COOKIES-auth
 
 Accessing information about the rating of an object is also easy::
@@ -149,24 +132,14 @@ Another example, on Nibbits we use a basic API interface, and we simply call the
 ==========================
 COOKIE format
 ==========================
-*New in this fork*: For now COOKIE name has fixed format: "vote-{{ content_type.id }}.{{ object.id }}.{{ rating_field.key }}[:6]" and COOKIE value is simple datetime-stamp.
+
+*New*: For now COOKIE name has fixed format: "vote-{{ content_type.id }}.{{ object.id }}.{{ rating_field.key }}[:6]" and COOKIE value is simple datetime-stamp.
 
 Example: vote-15.56.2c5504=20101213101523456000 
 
 And this COOKIE lives in user's browser for 1 year (this period is also fixed for now)
 
-==========================
-Deletion API
-==========================
-*New in this fork*: You may use method::
-
-	myinstance.rating.delete(request.user, request.META['REMOTE_ADDR']) # or ...
-	myinstance.rating.delete(request.user, request.META['REMOTE_ADDR'], request.COOKIES)
-
-Or just vote with 0::
-
-	myinstance.rating.add(score=0, user=request.user, ip_address=request.META['REMOTE_ADDR']) # or ...
-	myinstance.rating.add(score=0, user=request.user, ip_address=request.META['REMOTE_ADDR'], request.COOKIES)
+*This feature may change in the future*
 
 ==========================
 Limit Votes Per IP Address
