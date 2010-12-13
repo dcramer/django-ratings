@@ -49,7 +49,9 @@ to obtain a higher rating, you can use the ``weight`` kwarg::
 
 * ``range = 2`` - The range in which values are accepted. For example, a range of 2, says there are 2 possible vote scores.
 * ``can_change_vote = False`` - Allow the modification of votes that have already been made.
+* ``can_delete_vote = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = False``
 * ``allow_anonymous = False`` - Whether to allow anonymous votes.
+* ``use_cookies = False`` - Use COOKIES to authenticate user votes. Works only if ``allow_anonymous = True``. Yes, it's less secure than authentication bu auth.user or by IP. But sometimes it's necessary - e.g. for sub-networks under the same IP. For now COOKIE name is "vote-{{ content_type.id }}.{{ object.id }}.{{ rating_field.key }}[:6]" and COOKIE value is a kind of simple datetime-stamp (e.g. "vote-15.56.2c5504=20101213101523456000")
 
 ===================
 Using the model API
@@ -58,10 +60,12 @@ Using the model API
 And adding votes is also simple::
 
 	myinstance.rating.add(score=1, user=request.user, ip_address=request.META['REMOTE_ADDR'])
+	# Or with COOKIES: myinstance.rating.add(score=1, request.user, request.META['REMOTE_ADDR'], request.COOKIES)
 
 Retrieving votes is just as easy::
 
-	myinstance.rating.get_rating(request.user, request.META['REMOTE_ADDR'])
+	myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'])
+	# Or with COOKIES: myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES)
 
 Accessing information about the rating of an object is also easy::
 
@@ -127,6 +131,7 @@ Another example, on Nibbits we use a basic API interface, and we simply call the
 ==========================
 Limit Votes Per IP Address
 ==========================
+*New in this fork*: Added support for COOKIE-based authentication for anonymous users. Added "Delete/Cancel my vote" functionality (you may use method myinstance.rating.delete(...), or myinstance.rating.add(score=0, ...))
 
 *New in 0.3.5*: There is now a setting, ``RATINGS_VOTES_PER_IP``, to limit the number of unique IPs per object/rating-field combination. This is useful if you have issues with users registering multiple accounts to vote on a single object::
 
@@ -150,7 +155,7 @@ context variable will be 0::
 
 If you are using Coffin, a better approach might be::
 
-	{% with instance.field_name.get_rating_for_user(request.user, request.META['REMOTE_ADDR']) as vote %}
+	{% with instance.field_name.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES) as vote %}
 		Do some magic with {{ vote }}
 	{% endwith %}
 
