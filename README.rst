@@ -70,7 +70,7 @@ to obtain a higher rating, you can use the ``weight`` kwarg::
 
 * ``range = 2`` - The range in which values are accepted. For example, a range of 2, says there are 2 possible vote scores.
 * ``can_change_vote = False`` - Allow the modification of votes that have already been made.
-* ``can_delete_vote = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = False``
+* ``can_delete_vote = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = True``
 * ``allow_anonymous = False`` - Whether to allow anonymous votes.
 * ``use_cookies = False`` - Use COOKIES to authenticate user votes. Works only if ``allow_anonymous = True``. 
 
