@@ -44,6 +44,8 @@ class AddRatingView(object):
             return self.invalid_rating_response(request, context)
         except CannotChangeVote:
             return self.cannot_change_vote_response(request, context)
+        except CannotDeleteVote:
+            return self.cannot_delete_vote_response(request, context)
         if had_voted:
             return self.rating_changed_response(request, context, adds)
         return self.rating_added_response(request, context, adds)
@@ -61,13 +63,21 @@ class AddRatingView(object):
     def rating_changed_response(self, request, context, adds={}):
         response = HttpResponse('Vote changed.')
         if 'cookie' in adds:
-            response.set_cookie(adds['cookie_name'], adds['cookie'], 31536000)
+            cookie_name, cookie = adds['cookie_name'], adds['cookie']
+            if 'deleted' in adds:
+                response.delete_cookie(cookie_name)
+            else:
+                response.set_cookie(cookie_name, cookie, 31536000, path='/') # TODO: move cookie max_age to settings
         return response
     
     def rating_added_response(self, request, context, adds={}):
         response = HttpResponse('Vote recorded.')
         if 'cookie' in adds:
-            response.set_cookie(adds['cookie_name'], adds['cookie'], 31536000)
+            cookie_name, cookie = adds['cookie_name'], adds['cookie']
+            if 'deleted' in adds:
+                response.delete_cookie(cookie_name)
+            else:
+                response.set_cookie(cookie_name, cookie, 31536000, path='/') # TODO: move cookie max_age to settings
         return response
 
     def authentication_required_response(self, request, context):
@@ -77,6 +87,11 @@ class AddRatingView(object):
     
     def cannot_change_vote_response(self, request, context):
         response = HttpResponse('You have already voted.')
+        response.status_code = 403
+        return response
+    
+    def cannot_delete_vote_response(self, request, context):
+        response = HttpResponse('You can\'t delete this vote.')
         response.status_code = 403
         return response
     

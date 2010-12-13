@@ -100,8 +100,9 @@ class RatingManager(object):
         else:
             kwargs['user'] = user
         
-        use_cookies = self.field.allow_anonymous and self.field.use_cookies
+        use_cookies = (self.field.allow_anonymous and self.field.use_cookies)
         if use_cookies:
+            # TODO: move 'vote-%d.%d.%s' to settings or something
             cookie_name = 'vote-%d.%d.%s' % (kwargs['content_type'].pk, kwargs['object_id'], kwargs['key'][:6],) # -> md5_hexdigest?
             cookie = cookies.get(cookie_name)
             if cookie:    
@@ -126,8 +127,13 @@ class RatingManager(object):
             score = int(score)
         except (ValueError, TypeError):
             raise InvalidRating("%s is not a valid choice for %s" % (score, self.field.name))
-
-        if score < 1 or score > self.field.range:
+        
+        delete = (score == 0)
+        if delete and not self.field.allow_delete:
+            raise CannotDeleteVote("you are not allowed to delete votes for %s" % (self.field.name,))
+            # ... you're also can't delete your vote if you haven't permissions to change it. I leave this case for CannotChangeVote
+        
+        if score < 0 or score > self.field.range:
             raise InvalidRating("%s is not a valid choice for %s" % (score, self.field.name))
 
         is_anonymous = (user is None or not user.is_authenticated())
@@ -151,17 +157,21 @@ class RatingManager(object):
         if not user:
             kwargs['ip_address'] = ip_address
         
-        use_cookies = self.field.allow_anonymous and self.field.use_cookies
+        use_cookies = (self.field.allow_anonymous and self.field.use_cookies)
         if use_cookies:
+            defaults['cookie'] = datetime.now().strftime('%Y%m%d%H%M%S%f') # -> md5_hexdigest?
+            # TODO: move 'vote-%d.%d.%s' to settings or something
             cookie_name = 'vote-%d.%d.%s' % (kwargs['content_type'].pk, kwargs['object_id'], kwargs['key'][:6],) # -> md5_hexdigest?
-            cookie = cookies.get(cookie_name)
+            cookie = cookies.get(cookie_name) # try to get existent cookie value
             if not cookie:
-                cookie = datetime.now().strftime('%Y%m%d%H%M%S%f') # -> md5_hexdigest?
+                kwargs['cookie__isnull'] = True
             kwargs['cookie'] = cookie
 
         try:
             rating, created = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
+            if delete:
+                raise CannotDeleteVote("attempt to find and delete your vote for %s is failed" % (self.field.name,))
             if getattr(settings, 'RATINGS_VOTES_PER_IP', RATINGS_VOTES_PER_IP):
                 num_votes = Vote.objects.filter(
                     content_type=kwargs['content_type'],
@@ -172,6 +182,10 @@ class RatingManager(object):
                 if num_votes >= getattr(settings, 'RATINGS_VOTES_PER_IP', RATINGS_VOTES_PER_IP):
                     raise IPLimitReached()
             kwargs.update(defaults)
+            if use_cookies:
+                # record with specified cookie was not found ...
+                cookie = defaults['cookie'] # ... thus we need to replace old cookie (if presented) with new one
+                kwargs.pop('cookie__isnull', '') # ... and remove 'cookie__isnull' (if presented) from .create()'s **kwargs
             rating, created = Vote.objects.create(**kwargs), True
             
         has_changed = False
@@ -179,15 +193,21 @@ class RatingManager(object):
             if self.field.can_change_vote:
                 has_changed = True
                 self.score -= rating.score
-                rating.score = score
-                rating.save()
+                # you can delete your vote only if you have permission to change your vote
+                if not delete:
+                    rating.score = score
+                    rating.save()
+                else:
+                    self.votes -= 1
+                    rating.delete()
             else:
                 raise CannotChangeVote()
         else:
             has_changed = True
             self.votes += 1
         if has_changed:
-            self.score += rating.score
+            if not delete:
+                self.score += rating.score
             if commit:
                 self.instance.save()
             #setattr(self.instance, self.field.name, Rating(score=self.score, votes=self.votes))
@@ -212,13 +232,19 @@ class RatingManager(object):
             if not created:
                 score.__dict__.update(defaults)
                 score.save()
-                
+        
+        # return value
         adds = {}
         if use_cookies:
             adds['cookie_name'] = cookie_name
             adds['cookie'] = cookie
+        if delete:
+            adds['deleted'] = True
         return adds
 
+    def delete(self, user, ip_address, cookies={}, commit=True):
+        return self.add(0, user, ip_address, cookies, commit)
+    
     def _get_votes(self, default=None):
         return getattr(self.instance, self.votes_field_name, default)
     
@@ -299,6 +325,7 @@ class RatingField(IntegerField):
         self.range = kwargs.pop('range', 2)
         self.allow_anonymous = kwargs.pop('allow_anonymous', False)
         self.use_cookies = kwargs.pop('use_cookies', False)
+        self.allow_delete = kwargs.pop('allow_delete', False)
         kwargs['editable'] = False
         kwargs['default'] = 0
         kwargs['blank'] = True
