@@ -4,6 +4,27 @@ django-ratings
 
 A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds ``<field>_score``, and ``<field>_votes`` fields, which are both integer fields.
 
+============
+Fork purpose
+============
+
+------------
+COOKIE-auth
+------------
+
+I've added support for COOKIE-based authentication for anonymous users. Just set field option ``use_cookies = True``. Works only if ``allow_anonymous = True``. 
+
+Yes, it's less secure than authentication bu auth.user or by IP. But sometimes it's necessary - e.g. for sub-networks under the same IP. 
+
+For now COOKIE name is "vote-{{ content_type.id }}.{{ object.id }}.{{ rating_field.key }}[:6]" and COOKIE value is a kind of simple datetime-stamp (e.g. "vote-15.56.2c5504=20101213101523456000")
+
+------------
+Delete votes
+------------
+
+Another common functionality was added: ability to delete (or cancel) existent vote (e.g. if I'm using django-ratings for "Like/Un-Like" button). Use field option ``can_delete_vote = True``. Works only if ``can_change_vote = False``. 
+
+Deletion works with any schema: auth.user, IP or COOKIES.
 
 ============
 Installation
@@ -51,7 +72,7 @@ to obtain a higher rating, you can use the ``weight`` kwarg::
 * ``can_change_vote = False`` - Allow the modification of votes that have already been made.
 * ``can_delete_vote = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = False``
 * ``allow_anonymous = False`` - Whether to allow anonymous votes.
-* ``use_cookies = False`` - Use COOKIES to authenticate user votes. Works only if ``allow_anonymous = True``. Yes, it's less secure than authentication bu auth.user or by IP. But sometimes it's necessary - e.g. for sub-networks under the same IP. For now COOKIE name is "vote-{{ content_type.id }}.{{ object.id }}.{{ rating_field.key }}[:6]" and COOKIE value is a kind of simple datetime-stamp (e.g. "vote-15.56.2c5504=20101213101523456000")
+* ``use_cookies = False`` - Use COOKIES to authenticate user votes. Works only if ``allow_anonymous = True``. 
 
 ===================
 Using the model API
@@ -59,13 +80,11 @@ Using the model API
 
 And adding votes is also simple::
 
-	myinstance.rating.add(score=1, user=request.user, ip_address=request.META['REMOTE_ADDR'])
-	# Or with COOKIES: myinstance.rating.add(score=1, request.user, request.META['REMOTE_ADDR'], request.COOKIES)
+	myinstance.rating.add(score=1, user=request.user, ip_address=request.META['REMOTE_ADDR'], request.COOKIES) # last param is optional - only if you use COOKIES-auth
 
 Retrieving votes is just as easy::
 
-	myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'])
-	# Or with COOKIES: myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES)
+	myinstance.rating.get_rating_for_user(request.user, request.META['REMOTE_ADDR'], request.COOKIES) # last param is optional - only if you use COOKIES-auth
 
 Accessing information about the rating of an object is also easy::
 
