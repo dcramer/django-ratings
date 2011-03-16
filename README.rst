@@ -26,14 +26,14 @@ Setup your models
 
 The way django-ratings is built requires you to attach a RatingField to your models. This field will create two columns, a votes column, and a score column. They will both be prefixed with your field name::
 
-	from djangoratings import RatingField
+	from djangoratings.fields import RatingField
 
 	class MyModel(models.Model):
 	    rating = RatingField(range=5) # 5 possible rating values, 1-5
 
 Alternatively you could do something like::
 
-	from djangoratings import AnonymousRatingField
+	from djangoratings.fields import AnonymousRatingField
 
 	class MyModel(models.Model):
 	    rating = AnonymousRatingField(range=10)
@@ -48,7 +48,7 @@ to obtain a higher rating, you can use the ``weight`` kwarg::
 
 * ``range = 2`` - The range in which values are accepted. For example, a range of 2, says there are 2 possible vote scores.
 * ``can_change_vote = False`` - Allow the modification of votes that have already been made.
-* ``can_delete_vote = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = True``
+* ``allow_delete = False`` - Allow the deletion of existent votes. Works only if ``can_change_vote = True``
 * ``allow_anonymous = False`` - Whether to allow anonymous votes.
 * ``use_cookies = False`` - Use COOKIES to authenticate user votes. Works only if ``allow_anonymous = True``. 
 
@@ -81,6 +81,10 @@ How you can order by top-rated using an algorithm (example from Nibbits.com sour
 	    'rating': '((100/%s*rating_score/(rating_votes+%s))+100)/2' % (MyModel.rating.range, MyModel.rating.weight)
 	})
 	qs = qs.order_by('-rating')
+
+Get overall rating for your instance on a scale [0-range]::
+
+        myinstance.rating.get_rating()
 
 Get recent ratings for your instance::
 
