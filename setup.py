@@ -2,6 +2,11 @@
 
 from setuptools import setup, find_packages
 
+tests_require = [
+    'django',
+    # also requires the disqus fork of haystack
+]
+
 setup(
     name='django-ratings',
     version=".".join(map(str, __import__('djangoratings').__version__)),
@@ -12,6 +17,9 @@ setup(
     install_requires=[
         'django',
     ],
+    tests_require=tests_require,
+    extras_require={'test': tests_require},
+    test_suite='djangoratings.runtests.runtests',
     packages=find_packages(),
     include_package_data=True,
     classifiers=[
