@@ -118,6 +118,9 @@ class RatingManager(object):
         except Vote.DoesNotExist:
             pass
         return
+    
+    def get_iterable_range(self):
+        return range(1, self.field.range) #started from 1, because 0 is equal to delete
         
     def add(self, score, user, ip_address, cookies={}, commit=True):
         """add(score, user, ip_address)
