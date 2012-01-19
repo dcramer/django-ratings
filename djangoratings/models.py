@@ -1,9 +1,14 @@
+from datetime import datetime
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User
 
-import datetime
+try:
+    from django.utils.timezone import now
+except ImportError:
+    now = datetime.now
 
 from managers import VoteManager, SimilarUserManager
 
@@ -15,8 +20,8 @@ class Vote(models.Model):
     user            = models.ForeignKey(User, blank=True, null=True, related_name="votes")
     ip_address      = models.IPAddressField()
     cookie          = models.CharField(max_length=32, blank=True, null=True)
-    date_added      = models.DateTimeField(default=datetime.datetime.now, editable=False)
-    date_changed    = models.DateTimeField(default=datetime.datetime.now, editable=False)
+    date_added      = models.DateTimeField(default=now, editable=False)
+    date_changed    = models.DateTimeField(default=now, editable=False)
 
     objects         = VoteManager()
 
@@ -29,7 +34,7 @@ class Vote(models.Model):
         return u"%s voted %s on %s" % (self.user_display, self.score, self.content_object)
 
     def save(self, *args, **kwargs):
-        self.date_changed = datetime.datetime.now()
+        self.date_changed = now()
         super(Vote, self).save(*args, **kwargs)
 
     def user_display(self):
