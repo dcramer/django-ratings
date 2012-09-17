@@ -157,6 +157,7 @@ Template Tags
 =============
 
 Right now django-ratings has limited support for template tags, and only for Django.
+Load a ratings template tag set. ```{% load ratings %}```.
 
 -----------------
 rating_by_request
