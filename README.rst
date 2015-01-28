@@ -2,6 +2,8 @@
 django-ratings
 ##############
 
+**This project is no longer maintained**
+
 A generic ratings module. The field itself appends two additional fields on the model, for optimization reasons. It adds ``<field>_score``, and ``<field>_votes`` fields, which are both integer fields.
 
 ============
